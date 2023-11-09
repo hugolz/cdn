@@ -16,7 +16,7 @@ About file size, we rly should set a limit, even like a rly high one, but a limi
 
 ## Roadmap
 - [ ] CDN
-    - [ ] Web server that we can upload files to
+    - [x] Web server that we can upload files to
     - [ ] Web server that we can download files from
     - [ ] Save files in a good format(prob json) and save its metadata (name, file ext, image size)
 - [ ] Compression
