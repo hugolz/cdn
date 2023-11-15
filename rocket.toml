@@ -1,0 +1,26 @@
+# https://rocket.rs/v0.5-rc/guide/configuration/
+
+## defaults for ALL profiles
+[default]
+# IP address to serve on.
+address = "127.0.0.1"
+# Port to serve on.
+port = 8000
+# Number of threads to use for executing futures.
+workers = 8
+# Keep-alive timeout seconds; disabled when 0.
+keep_alive = 5 # This could become a problem if we have to read/write large files
+# Streaming read size limits.
+limits = { form = "64 kB", json = "1 MiB" }
+# Max level to log. (off/normal/debug/critical)
+log_level = "normal" # Isn't it the 'minimal' level instead ? like log everything above that threshold ?
+
+## set only when compiled in debug mode, i.e, `cargo build`
+[debug]
+## only the `json` key from `default` will be overridden; `form` will remain
+limits = { json = "5 MiB" }
+
+
+## set only when compiled in release mode, i.e, `cargo build --release`
+[release]
+limits = { json = "10 MiB" }
