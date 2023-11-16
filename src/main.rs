@@ -1,33 +1,8 @@
 // #[macro_use]
 // extern crate rocket;
-use rocket::data::ByteUnit;
-use rocket::serde::json::Json;
 
-#[derive(Debug, PartialEq, Eq, rocket::serde::Deserialize)]
-#[serde(crate = "rocket::serde")]
-struct UserData {
-    username: String,
-    password: String,
-    // file: String,
-}
-
-const MAX_FILE_SIZE: ByteUnit = ByteUnit::Kilobyte(128);
-
-#[rocket::post("/json", format = "application/json", data = "<file>")]
-async fn upload_json(file: Json<UserData>) -> String {
-    println!("{file:?}");
-    format!("Username: {u}\nPassword: {pw}", u = file.username, pw = file.password)
-}
-
-#[rocket::post("/", data="<file>")]
-async fn upload(file: rocket::Data<'_>) -> String{
-    // I wonder if there is a way to get the file name..
-    let stream = file.open(MAX_FILE_SIZE);
-    let Ok(buff) = stream.into_bytes().await else {
-        return "Failled to unpack the file".to_string();
-    };
-    format!("Received file with len: {}", buff.len())
-}
+mod basic;
+mod json;
 
 #[rocket::get("/<id>")]
 async fn download(id: String) -> String {
@@ -50,5 +25,8 @@ fn index() -> &'static str {
 
 #[rocket::launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", rocket::routes![index, upload, upload_json, download])
+    rocket::build().mount(
+        "/",
+        rocket::routes![index, basic::upload, json::upload_json, download],
+    )
 }
