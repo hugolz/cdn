@@ -1,13 +1,13 @@
-use rocket::http::ContentType;
-use rocket::http::Status;
-use rocket::response::Responder;
-use rocket::serde::json::Json;
-use rocket::Request;
-use rocket::Response;
+use rocket::{
+    http::{ContentType, Status},
+    response::Responder,
+    serde::json::Json,
+    Request, Response,
+};
 
 #[derive(Debug, PartialEq, Eq, rocket::serde::Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub struct UserData {
+pub struct InputData {
     username: String,
     password: String,
     // file: String,
@@ -29,7 +29,7 @@ impl<'r, T: rocket::serde::Serialize> Responder<'r, 'static> for ApiResponse<T> 
 }
 
 #[rocket::post("/json", format = "application/json", data = "<data>")]
-pub async fn upload_json(data: Json<UserData>) -> ApiResponse<String> {
+pub async fn upload_json(data: Json<InputData>) -> ApiResponse<String> {
     println!("{data:?}");
     ApiResponse {
         json: format!(
