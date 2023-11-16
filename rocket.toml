@@ -10,10 +10,19 @@ port = 8000
 workers = 8
 # Keep-alive timeout seconds; disabled when 0.
 keep_alive = 5 # This could become a problem if we have to read/write large files
-# Streaming read size limits.
-limits = { form = "64 kB", json = "1 MiB" }
 # Max level to log. (off/normal/debug/critical)
 log_level = "normal" # Isn't it the 'minimal' level instead ? like log everything above that threshold ?
+
+# Streaming read size limits.
+[default.limits]
+bytes = "0 B"
+data-form = "0 B"
+file = "0 B"
+form = "0 B"
+msgpack = "0 B"
+string = "0 B"
+json = "1 MiB"
+
 
 ## set only when compiled in debug mode, i.e, `cargo build`
 [debug]
