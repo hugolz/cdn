@@ -19,4 +19,3 @@ Paused for now as it was a porject for work but i don't need it for now
     - [ ] Json api
     - [ ] Save data in ron format
 - [ ] Compression
-    - [ ] 
