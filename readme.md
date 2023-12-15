@@ -13,9 +13,10 @@ Paused for now as it was a porject for work but i don't need it for now
 
 
 ## Roadmap
-- [ ] CDN
+- [ ] The actual server
     - [x] Web server that we can upload files to
     - [ ] Web server that we can download files from
-    - [ ] Save files in a good format(prob json) and save its metadata (name, file ext, image size)
+    - [ ] Json api
+    - [ ] Save data in ron format
 - [ ] Compression
-    - [ ] Compress any file type
+    - [ ] 
