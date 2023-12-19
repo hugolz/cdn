@@ -1,1 +1,0 @@
-curl http://127.0.0.1:8000/json --header "Content-Type: application/json" --request POST --data "{\"username\": \"xyz\", \"password\": \"zyx\"}" 

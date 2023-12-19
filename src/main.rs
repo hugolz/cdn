@@ -5,28 +5,27 @@ mod basic;
 mod json;
 
 #[rocket::get("/<id>")]
-async fn download(id: String) -> String {
+async fn download(id: &str) -> String {
     format!("Could not fetch {id}, this part is not done yet :)")
 }
 
 #[rocket::get("/")]
-fn index() -> &'static str {
+fn root() -> &'static str {
     "
-    How to use:
-        File content:
-            From file name:
-                curl http://localhost:8000/ --request POST --data-binary \"@file.txt\"
-            From stdin (in cmd, koz buggy in pwsh):            
-                cat file.txt | curl http://localhost:8000 --request POST --data-binary @-
-        Json: (Not finished yet, and again in cmd koz buggy in pwsh)
-            curl http://localhost:8000/json --header \"Content-Type: application/json\" --request POST --data \"{\\\"username\\\": \\\"xyz\\\", \\\"password\\\": \\\"xyz\\\"}\" 
+        Hi, please take a look at the /examples directory to understand how to use this api
     "
 }
 
+#[rocket::catch(403)]
+pub async fn root_403() -> String {
+    "403".to_string()
+}
+
 #[rocket::launch]
-fn rocket() -> _ {
-    rocket::build().mount(
-        "/",
-        rocket::routes![index, basic::upload, json::upload_json, download],
-    )
+async fn rocket() -> _ {
+    rocket::build()
+        .register("/", rocket::catchers![root_403])
+        .mount("/", rocket::routes![root, basic::upload, download])
+        .mount("/json", rocket::routes![json::upload_json])
+        .register("/json", rocket::catchers![json::upload_json_400])
 }
