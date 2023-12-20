@@ -1087,18 +1087,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rocket-multipart-form-data"
-version = "0.10.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3c3cd05b4ff598b9490fbdfc8edcfdbab0ff3f546c0f58d5d3a7127addbc789"
-dependencies = [
- "mime",
- "multer",
- "rocket",
- "tokio-util",
-]
-
-[[package]]
 name = "rocket_codegen"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1218,9 +1206,9 @@ dependencies = [
 
 [[package]]
 name = "serde_spanned"
-version = "0.6.4"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12022b835073e5b11e90a14f86838ceb1c8fb0325b72416845c487ac0fa95e80"
+checksum = "eb3622f419d1296904700073ea6cc23ad690adbd66f13ea683df73298736f0c1"
 dependencies = [
  "serde",
 ]
@@ -1302,7 +1290,6 @@ dependencies = [
  "logger",
  "rbase64",
  "rocket",
- "rocket-multipart-form-data",
  "uuid",
 ]
 
@@ -1371,9 +1358,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.35.0"
+version = "1.35.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "841d45b238a16291a4e1584e61820b8ae57d696cc5015c459c229ccc6990cc1c"
+checksum = "c89b4efa943be685f629b149f53829423f8f5531ea21249408e8e2f8671ec104"
 dependencies = [
  "backtrace",
  "bytes",

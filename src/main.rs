@@ -1,5 +1,6 @@
 // #[macro_use]
 // extern crate rocket;
+#[allow(unused_imports)]
 #[macro_use(trace, debug, info, warn, error)]
 extern crate log;
 
@@ -49,7 +50,7 @@ async fn main() {
     let rocket = rocket::build()
         .attach(rocket::fairing::AdHoc::on_liftoff(
             "log config",
-            |rocket_orbit| {
+            |_rocket_orbit| {
                 std::boxed::Box::pin(async move {
                     debug!("Hi"); // Was used to do some tests      
                 })
@@ -88,8 +89,7 @@ fn display_config<'a>(
     let indent = rocket_cfg.ident.as_str().unwrap_or("[ERROR] Undefined");
     let ip_headers = rocket_cfg
         .ip_header
-        .as_ref()
-        .and_then(|header| Some(header.as_str()))
+        .as_ref().map(|header| header.as_str())
         .unwrap_or("[ERROR] Undefined");
     let limits = ["bytes", "data-form", "file", "json", "msgpack", "string"]
         .iter()
@@ -145,8 +145,6 @@ fn display_config<'a>(
         out.push(']');
         out
     };
-    // debug!("{routes:#?}");
-    // debug!("{catchers:#?}");
     debug!("Config:\nUsing profile: {profile}\nAddress: {address}:{port}\nWorkers: {workers}\nIndent: {indent}\nHeaders: {ip_headers}\nLimits: {formatted_limits}\nConnection lifetime: {keep_alive_s}s\nShutdown mode: {shutdown_mode}\nRoutes: {formatted_routes}\nCatchers: {formatted_catchers}",
         formatted_limits = display_vec(limits),
         formatted_routes = display_vec(routes),
