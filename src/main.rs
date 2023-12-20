@@ -25,7 +25,6 @@ pub async fn root_403() -> String {
 async fn rocket() -> _ {
     rocket::build()
         .register("/", rocket::catchers![root_403])
-        .mount("/", rocket::routes![root, basic::upload, download])
-        .mount("/json", rocket::routes![json::upload_json])
+        .mount("/", rocket::routes![root, json::upload_json, basic::upload, download])
         .register("/json", rocket::catchers![json::upload_json_400])
 }
