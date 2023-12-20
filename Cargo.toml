@@ -11,4 +11,7 @@ rbase64 = "2.0.3"
 rocket = { version = "0.5.0-rc.4", features = ["json"] }
 rocket-multipart-form-data = "0.10.7"
 uuid =  { version = "1.6.1", features = ["v4"] }
-
+logger = {git = "https://github.com/Bowarc/Crates.git", package = "logger"}
+log = "0.4.20"
+fern = "0.6.2"
+chrono = "0.4.31"
