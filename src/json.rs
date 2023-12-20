@@ -41,7 +41,7 @@ impl<'r> Responder<'r, 'static> for JsonApiResponse {
     }
 }
 
-#[rocket::post("/", format = "application/json", data = "<data>")]
+#[rocket::post("/json", format = "application/json", data = "<data>")]
 pub async fn upload_json(data: Json<UploadData>) -> JsonApiResponse {
     println!(
         "Received user data: {:?}, File size: {} bytes",
