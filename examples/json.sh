@@ -2,7 +2,7 @@
 
 username="hugo"
 file_path="./assets/rocket.png"
-file_ext="png"
+file_ext=""
 endpoint="http://127.0.0.1:8000/json" 
 
 # Don't forget the -w 0 else the output will be escaped and escape chars are not allowed in serde::json

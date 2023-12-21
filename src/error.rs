@@ -9,9 +9,9 @@ pub async fn upload_json_400(_req: &rocket::Request<'_>) -> crate::response::Jso
 }
 
 #[rocket::catch(413)]
-pub async fn upload_json_413(req: &rocket::Request<'_>) -> crate::response::JsonApiResponse {
+pub async fn upload_json_413(_req: &rocket::Request<'_>) -> crate::response::JsonApiResponse {
     crate::response::JsonApiResponseBuilder::default()
-        .with_json(json!({"status": 413, "message": "Data too large"}))
+        .with_json(json!({"status": 413, "message": format!("Data too large, {} max", unsafe{ crate::JSON_REQ_LIMIT})}))
         .with_status(Status::BadRequest)
         .build()
 }

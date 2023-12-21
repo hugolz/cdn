@@ -145,7 +145,7 @@ fn display_config<'a>(
         out.push(']');
         out
     };
-    
+
     info!("Config:\nUsing profile: {profile}\nAddress: {address}:{port}\nWorkers: {workers}\nIndent: {indent}\nHeaders: {ip_headers}\nLimits: {formatted_limits}\nConnection lifetime: {keep_alive_s}s\nShutdown mode: {shutdown_mode}\nRoutes: {formatted_routes}\nCatchers: {formatted_catchers}",
         formatted_limits = display_vec(limits),
         formatted_routes = display_vec(routes),
