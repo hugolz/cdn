@@ -4,25 +4,11 @@
 #[macro_use(trace, debug, info, warn, error)]
 extern crate log;
 
-mod basic;
-mod json;
+mod error;
+mod response;
+mod routes;
 
-#[rocket::get("/<id>")]
-async fn download(id: &str) -> String {
-    format!("Could not fetch {id}, this part is not done yet :)")
-}
-
-#[rocket::get("/")]
-fn root() -> &'static str {
-    "
-        Hi, please take a look at the /examples directory to understand how to use this api
-    "
-}
-
-#[rocket::catch(403)]
-pub async fn root_403() -> String {
-    "403".to_string()
-}
+static mut JSON_REQ_LIMIT: rocket::data::ByteUnit = rocket::data::ByteUnit::Byte(0);
 
 #[rocket::main]
 async fn main() {
@@ -52,15 +38,23 @@ async fn main() {
             "log config",
             |_rocket_orbit| {
                 std::boxed::Box::pin(async move {
-                    debug!("Hi"); // Was used to do some tests      
+                    debug!("Hi"); // Was used to do some tests
                 })
             },
         ))
-        .register("/", rocket::catchers![root_403])
-        .register("/json", rocket::catchers![json::upload_json_400])
+        .register("/", rocket::catchers![error::root_403])
+        .register(
+            "/json",
+            rocket::catchers![error::upload_json_400, error::upload_json_413],
+        )
         .mount(
             "/",
-            rocket::routes![root, json::upload_json, basic::upload, download],
+            rocket::routes![
+                routes::root,
+                routes::upload_json,
+                routes::basic_upload,
+                routes::download
+            ],
         )
         .ignite()
         .await
@@ -72,6 +66,11 @@ async fn main() {
 
     ----------------------------*/
     display_config(rocket.config(), rocket.routes(), rocket.catchers());
+
+    /*-------------------
+        Save as static
+    -------------------*/
+    unsafe { JSON_REQ_LIMIT = rocket.config().limits.get("json").unwrap() }
 
     rocket.launch().await.unwrap();
 }
@@ -89,7 +88,8 @@ fn display_config<'a>(
     let indent = rocket_cfg.ident.as_str().unwrap_or("[ERROR] Undefined");
     let ip_headers = rocket_cfg
         .ip_header
-        .as_ref().map(|header| header.as_str())
+        .as_ref()
+        .map(|header| header.as_str())
         .unwrap_or("[ERROR] Undefined");
     let limits = ["bytes", "data-form", "file", "json", "msgpack", "string"]
         .iter()
@@ -145,7 +145,8 @@ fn display_config<'a>(
         out.push(']');
         out
     };
-    debug!("Config:\nUsing profile: {profile}\nAddress: {address}:{port}\nWorkers: {workers}\nIndent: {indent}\nHeaders: {ip_headers}\nLimits: {formatted_limits}\nConnection lifetime: {keep_alive_s}s\nShutdown mode: {shutdown_mode}\nRoutes: {formatted_routes}\nCatchers: {formatted_catchers}",
+    
+    info!("Config:\nUsing profile: {profile}\nAddress: {address}:{port}\nWorkers: {workers}\nIndent: {indent}\nHeaders: {ip_headers}\nLimits: {formatted_limits}\nConnection lifetime: {keep_alive_s}s\nShutdown mode: {shutdown_mode}\nRoutes: {formatted_routes}\nCatchers: {formatted_catchers}",
         formatted_limits = display_vec(limits),
         formatted_routes = display_vec(routes),
         formatted_catchers = display_vec(catchers)

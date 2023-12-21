@@ -11,6 +11,8 @@ rbase64 = "2.0.3"
 rocket = { version = "0.5.0", features = ["json"] }
 uuid =  { version = "1.6.1", features = ["v4"] }
 logger = {git = "https://github.com/Bowarc/Crates.git", package = "logger"}
+time = {git = "https://github.com/Bowarc/Crates.git", package = "time"}
 log = "0.4.20"
 fern = "0.6.2"
 chrono = "0.4.31"
+brotli = "3.4.0"

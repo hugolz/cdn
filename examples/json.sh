@@ -1,7 +1,7 @@
 #!/bin/bash
 
 username="hugo"
-file_path="assets/rocket.png"
+file_path="./assets/rocket.png"
 file_ext="png"
 endpoint="http://127.0.0.1:8000/json" 
 
@@ -19,4 +19,10 @@ json_payload=$(cat <<EOF
 EOF
 )
 
-curl --request POST --header "Content-Type: application/json" --data-ascii "$json_payload" "$endpoint"
+# Data binary is used to send larger amount of data
+curl "$endpoint" \
+  --request POST \
+  --header "Content-Type: application/json" \
+  --data-binary '@-' << EOF
+  $json_payload 
+EOF
