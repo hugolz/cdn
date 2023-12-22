@@ -53,7 +53,7 @@ impl Cache {
     ) -> tokio::task::JoinHandle<Result<(), CacheError>> {
         // Compress and store the given cache entry
         let entry = Arc::new(CacheEntry::new(id, meta));
-        self.data.push(entry.clone());
+        // self.data.push(entry.clone());
 
         tokio::spawn(async move { store(entry, data).await })
     }

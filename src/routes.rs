@@ -21,7 +21,7 @@ pub async fn upload_json(
     let id = uuid::Uuid::new_v4();
     let metadata = data.metadata.clone();
     let file_data = &data.file;
-    let wait_store = true;
+    let wait_store = false;
 
     // Validation of user input
 
