@@ -1,7 +1,8 @@
 #!/bin/bash
 
 username="hugo"
-file_path="./assets/rocket.png"
+file_path="./assets/dummy"
+
 file_ext=""
 endpoint="http://127.0.0.1:8000/json" 
 
