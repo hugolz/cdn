@@ -58,6 +58,9 @@ async fn main() {
             "/",
             rocket::routes![
                 routes::root,
+                routes::style,
+                routes::front,
+                routes::serve_wasm,
                 routes::upload_json,
                 routes::basic_upload,
                 routes::download

@@ -79,48 +79,96 @@ async fn store(entry: Arc<CacheEntry>, data: Vec<u8>) -> Result<(), CacheError> 
 
     let id = entry.id.as_hyphenated().to_string();
     let total_timer = std::time::Instant::now();
-    let Ok(mut file) = tokio::fs::File::create(format!("./cache/{id}.data")).await else {
-        error!("[{id}] Could not create data file");
-        return Err(CacheError::FileCreate("data".to_string()));
+
+    let (files, exec_time) = time::timeit_async(||  async{
+        futures::join!(
+            async{
+                Ok(match tokio::fs::File::create(format!("./cache/{id}.data")).await {
+                    Ok(f) => f,
+                    Err(e) =>{
+                        error!("[{id}] Could not create data file: {e}");
+                        return Err(CacheError::FileCreate("data".to_string()));
+                    }
+                })
+            },
+            async{
+                Ok(match tokio::fs::File::create(format!("./cache/{id}.meta")).await {
+                    Ok(file) => file,
+                    Err(e) => {
+                        error!("[{id}] Could not create meta file: {e}");
+                        return Err(CacheError::FileCreate("meta".to_string()));
+                    }
+                })
+            }
+        )
+    }).await;
+
+    // TODO: Fix this 
+    let (mut data_file, mut meta_file) = match files{
+        (Ok(data_file), Ok(meta_file)) => (data_file, meta_file),
+        (Ok(_), Err(e)) => return Err(e),
+        (Err(e), Ok(_)) =>  return Err(e),
+        (Err(de), Err(me)) =>  return Err(CacheError::Test),
     };
-    let data_length = data.len();
 
-    // Compression algorithms seems rly uneffective with most files
+    let (res, data_exec_time) = time::timeit_async(|| async {
+        let data_length = data.len();
 
-    let mut encoder_params = brotli::enc::BrotliEncoderParams::default();
-    encoder_params.quality = 5;
+        // Compression algorithms seems rly uneffective with most files
+        let encoder_params = brotli::enc::BrotliEncoderParams {
+            quality: 5,
+            ..Default::default()
+        };
 
-    let mut compressed_data = Vec::new();
-    let mut data_reader = Cursor::new(data);
-    let (res, compression_exec_time) = time::timeit_mut(|| {
-        brotli::BrotliCompress(&mut data_reader, &mut compressed_data, &encoder_params)
-    });
+        let mut compressed_data = Vec::new();
+        let mut data_reader = Cursor::new(data);
+        let (res, compression_exec_time) = time::timeit_mut(|| {
+            brotli::BrotliCompress(&mut data_reader, &mut compressed_data, &encoder_params)
+        });
+
+        let bytes = match res {
+            Ok(bytes) => {
+                entry.data_size.store(bytes, Ordering::Relaxed);
+                bytes
+            }
+            Err(e) => {
+                error!("[{id}] Failled to compress due to: {e}");
+                return Err(CacheError::Compression);
+            }
+        };
+
+        debug!(
+            "[{id}] Finished compressing {} -> {}, took {:?}",
+            rocket::data::ByteUnit::Byte(data_length as u64),
+            rocket::data::ByteUnit::Byte(bytes as u64),
+            compression_exec_time
+        );
+
+        let (res, file_write_exec_time) =
+            time::timeit_async(|| async { data_file.write_all(&compressed_data).await }).await;
+
+        if let Err(e) = res {
+            error!("[{id}] Error while writing data file {e}");
+            panic!()
+        }
+
+        debug!(
+            "[{id}] Successfully wrote its data, took {}",
+            time::format(file_write_exec_time)
+        );
+        Ok(bytes)
+    })
+    .await;
+
+    debug!("Data was written in {}", time::format(data_exec_time));
+
     let bytes = match res {
-        Ok(bytes) => {
-            entry.data_size.store(bytes, Ordering::Relaxed);
-            bytes
-        }
+        Ok(bytes) => bytes,
         Err(e) => {
-            error!("[{id}] Failled to compress due to: {e}");
-            return Err(CacheError::Compression);
+            error!("{e}");
+            return Err(CacheError::FileWrite("data".to_string()));
         }
     };
-
-    debug!(
-        "[{id}] Finished compressing {} -> {}, took {:?}",
-        rocket::data::ByteUnit::Byte(data_length as u64),
-        rocket::data::ByteUnit::Byte(bytes as u64),
-        compression_exec_time
-    );
-
-    let file_write_timer = std::time::Instant::now();
-    if let Err(e) = file.write_all(&compressed_data).await{
-        error!("[{id}] Error while writing data file {e}")
-    }
-    debug!(
-        "[{id}] Successfully wrote its data, took {}",
-        time::format(file_write_timer.elapsed())
-    );
 
     /* -------------------------------------------------------------------------------
                                 Meta file
@@ -129,32 +177,30 @@ async fn store(entry: Arc<CacheEntry>, data: Vec<u8>) -> Result<(), CacheError> 
         I's written at the end so the download method wont find partial data
     ------------------------------------------------------------------------------- */
 
-    let mut file = match rocket::tokio::fs::File::create(format!("./cache/{id}.meta")).await {
-        Ok(file) => file,
-        Err(e) => {
-            error!("[{id}] Could not create meta file: {e}");
-            return Err(CacheError::FileCreate("meta".to_string()));
-        }
-    };
+    let (res, meta_write_exec_time) = time::timeit_async(|| async {
+        let data = serde_json::to_string_pretty(&json!({
+            "username": entry.metadata.username,
+            "extension": entry.metadata.file_ext,
+            "data size": bytes
+        }))
+        .unwrap();
 
-    let meta_write_timer = std::time::Instant::now();
-    if let Err(e) = file
-        .write_all(
-            serde_json::to_string_pretty(&json!({
-                "username": entry.metadata.username,
-                "extension": entry.metadata.file_ext,
-                "data size": bytes
-            }))
-            .unwrap()
-            .as_bytes(),
-        )
-        .await
-    {
+        if let Err(e) = meta_file.write_all(data.as_bytes()).await {
+            error!("Failled to write meta file: {e}");
+            return Err(CacheError::FileWrite("meta".to_string()));
+        }
+        Ok(())
+    })
+    .await;
+
+    if let Err(e) = res {
         error!("[{id}] Could not write meta file due to: {e}");
+        panic!()
     }
+
     debug!(
-        "[{id}] Successfully wrote meta file, took: {:?}",
-        meta_write_timer.elapsed()
+        "[{id}] Successfully wrote meta file, took: {}",
+        time::format(meta_write_exec_time)
     );
     debug!(
         "[{id}] Cache creation ended successfully in {:?}",

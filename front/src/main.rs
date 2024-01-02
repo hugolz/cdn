@@ -1,7 +1,7 @@
 use gloo::console;
 use js_sys::Date;
-use yew::{html, Component, Context, Html};
 use wasm_bindgen::prelude::wasm_bindgen;
+use yew::{html, Component, Context, Html};
 
 // Define the possible messages which can be sent to the component
 pub enum Msg {
@@ -72,6 +72,6 @@ impl Component for App {
     }
 }
 
-fn main(){
+fn main() {
     yew::Renderer::<App>::new().render();
 }

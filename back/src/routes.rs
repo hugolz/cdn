@@ -1,5 +1,5 @@
 use crate::cache::Cache;
-use rocket::tokio::sync::Mutex;
+use rocket::tokio::{sync::Mutex, io::AsyncReadExt};
 use rocket::{
     http::Status,
     serde::json::{
@@ -90,8 +90,42 @@ pub async fn download(id: &str) -> String {
 }
 
 #[rocket::get("/")]
-pub fn root() -> &'static str {
-    "
+pub async fn root() -> crate::response::Response {
+    use std::io::Read as _;
+    let msg=  "
         Hi, please take a look at the /examples directory to understand how to use this api
-    "
+    ";
+
+    let mut buffer = Vec::new();
+    let size = std::fs::File::open("./static/index.html").unwrap().read_to_end(&mut buffer).unwrap();
+
+    crate::response::Response{ status: Status::Ok, content: buffer, c_type: rocket::http::ContentType::HTML }
 }
+
+#[rocket::get("/style.css")]
+pub async fn style() -> crate::response::Response{
+    use std::io::Read as _;
+    let mut buffer = Vec::new();
+    let size = std::fs::File::open("./static/style.css").unwrap().read_to_end(&mut buffer).unwrap();
+
+    crate::response::Response{ status: Status::Ok, content: buffer, c_type: rocket::http::ContentType::CSS }
+}
+
+#[rocket::get("/front.js")]
+pub async fn front() -> crate::response::Response {
+    use std::io::Read as _;
+    let mut buffer = Vec::new();
+    let size = std::fs::File::open("./static/front.js").unwrap().read_to_end(&mut buffer).unwrap();
+
+    crate::response::Response{ status: Status::Ok, content: buffer, c_type: rocket::http::ContentType::JavaScript }
+}
+
+#[rocket::get("/front_bg.wasm")]
+pub fn serve_wasm() -> crate::response::Response {
+    use std::io::Read as _;
+    let mut buffer = Vec::new();
+    let size = std::fs::File::open("./static/front_bg.wasm").unwrap().read_to_end(&mut buffer).unwrap();
+
+    crate::response::Response{ status: Status::Ok, content: buffer, c_type: rocket::http::ContentType::WASM }
+}
+
