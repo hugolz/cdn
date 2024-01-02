@@ -114,10 +114,12 @@ async fn store(entry: Arc<CacheEntry>, data: Vec<u8>) -> Result<(), CacheError> 
     );
 
     let file_write_timer = std::time::Instant::now();
-    file.write_all(&compressed_data).await;
+    if let Err(e) = file.write_all(&compressed_data).await{
+        error!("[{id}] Error while writing data file {e}")
+    }
     debug!(
         "[{id}] Successfully wrote its data, took {}",
-        time::display_duration(file_write_timer.elapsed())
+        time::format(file_write_timer.elapsed())
     );
 
     /* -------------------------------------------------------------------------------

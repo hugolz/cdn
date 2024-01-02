@@ -65,7 +65,7 @@ pub async fn upload_json(
 
     debug!(
         "[{id}] Responded in {}",
-        time::display_duration(start_timer.elapsed())
+        time::format(start_timer.elapsed())
     );
 
     crate::response::JsonApiResponseBuilder::default()
