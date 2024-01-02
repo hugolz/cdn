@@ -47,3 +47,20 @@ impl Default for JsonApiResponseBuilder {
         }
     }
 }
+
+
+pub struct Response{
+    pub status: Status,
+    pub content: Vec<u8>,
+    pub c_type: rocket::http::ContentType,
+}
+
+impl<'r> rocket::response::Responder<'r, 'static> for Response {
+    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
+        rocket::Response::build()
+            .header(self.c_type)
+            .status(self.status)
+            .sized_body(self.content.len(), std::io::Cursor::new(self.content))
+            .ok()
+    }
+}

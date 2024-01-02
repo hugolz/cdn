@@ -48,6 +48,11 @@ cat << EOF > $out_dir/index.html
 EOF
 
 cat << EOF > $out_dir/style.css
+body{
+  background-color: #232323;
+  color: white;
+}
+
 button {
   background-color: #008f53; /* Green */
   border: 0;
@@ -75,3 +80,10 @@ button {
   justify-content: center;
 }
 EOF
+
+if ! [ -d "./static" ]; then
+    echo Creating ouput directory
+    mkdir ./static
+fi
+
+cp $out_dir/* ./static/
