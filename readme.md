@@ -18,3 +18,10 @@ Paused for now as it was a porject for work but i don't need it for now
     - [ ] Web server that we can download files from
     - [x] Json api
 - [x] Compression
+- [ ] Wasm front end
+    - [ ] Dashboard
+
+
+## How to use
+The scripts are in the ./scripts dir
+`sh scripts/build.sh`

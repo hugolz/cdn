@@ -127,6 +127,7 @@ dependencies = [
  "rbase64",
  "regex",
  "rocket",
+ "thiserror",
  "time 0.1.0",
  "uuid",
 ]

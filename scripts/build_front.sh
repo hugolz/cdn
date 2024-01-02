@@ -7,7 +7,7 @@ mode=release # debug, release
 
 out_dir=./front/out
 
-echo Compiling
+echo Compiling front
 if [ "$mode" = release ]
 then
   cargo build -p front --release --target=wasm32-unknown-unknown
