@@ -1,40 +1,27 @@
+use crate::cache::Cache;
+use rocket::tokio::sync::Mutex;
 use rocket::{
     http::Status,
-    serde::{
-        json::{
-            serde_json::{self, json},
-            Json,
-        },
-        Deserialize, Serialize,
+    serde::json::{
+        serde_json::{self, json},
+        Json,
     },
     tokio::io::AsyncWriteExt,
 };
 use std::io::Cursor;
-use std::io::Write as _;
-
-#[derive(Debug, Serialize, Deserialize, rocket::FromForm, Clone)]
-#[serde(crate = "rocket::serde")]
-pub struct Metadata {
-    username: String,
-    file_ext: String,
-    // ...
-}
-
-#[derive(Debug, Serialize, Deserialize, rocket::FromForm)]
-#[serde(crate = "rocket::serde")]
-pub struct UploadData {
-    metadata: Metadata,
-    file: String,
-}
 
 #[rocket::post("/json", format = "application/json", data = "<data>")]
-pub async fn upload_json(data: Json<UploadData>) -> crate::response::JsonApiResponse {
+pub async fn upload_json(
+    data: Json<crate::data::UploadData>,
+    cache: &rocket::State<Mutex<Cache>>,
+) -> crate::response::JsonApiResponse {
     // Setup
 
     let start_timer = std::time::Instant::now();
     let id = uuid::Uuid::new_v4();
     let metadata = data.metadata.clone();
     let file_data = &data.file;
+    let wait_store = false;
 
     // Validation of user input
 
@@ -55,7 +42,8 @@ pub async fn upload_json(data: Json<UploadData>) -> crate::response::JsonApiResp
         rocket::data::ByteUnit::Byte(file_data.len() as u64)
     );
 
-    // Decode user input
+    // Decode user input | Decoding makes the compression 'faster' koz it has less data to compress
+    // let file_content = file_data.clone().into_bytes();
     let Ok(file_content) = rbase64::decode(file_data) else {
         error!("[{id}] Could not decode request");
         return crate::response::JsonApiResponseBuilder::default()
@@ -66,102 +54,17 @@ pub async fn upload_json(data: Json<UploadData>) -> crate::response::JsonApiResp
             .build();
     };
 
-    rocket::tokio::spawn(async move {
-        let start_timer = std::time::Instant::now();
-        let Ok(file) = rocket::tokio::fs::File::create(format!("./cache/{id}.data")).await else {
-            error!("[{id}] Could not create data file");
-            return;
-        };
-        let file_length = file_content.len();
+    let exec = cache.lock().await.store(id, metadata, file_content);
 
-        // Compression algorithms seems rly uneffective with most files
-
-        match brotli::BrotliCompress(
-            &mut Cursor::new(file_content),
-            &mut file.into_std().await,
-            &brotli::enc::BrotliEncoderParams::default(),
-        ) {
-            Ok(bytes) => {
-                debug!(
-                    "[{id}] Finished compressing {} -> {}",
-                    rocket::data::ByteUnit::Byte(file_length as u64),
-                    rocket::data::ByteUnit::Byte(bytes as u64)
-                );
-            }
-            Err(e) => {
-                error!("[{id}] Failled to compress due to: {e}")
-            }
+    if wait_store {
+        debug!("[{id}] Waiting for cache to finish storing the data");
+        if let Err(e) = exec.await.unwrap() {
+            error!("[{id}] An error occured while storing the given data: {e}");
         }
-
-        // match brotli::CompressorWriter::new(&mut file.into_std().await, 4096, 11, 24)
-        //     .write_all(&file_content)
-        // {
-        //     Ok(bytes) => {
-        //         debug!(
-        //             "[{id}] Finished compressing {} -> {}",
-        //             rocket::data::ByteUnit::Byte(file_content.len() as u64),
-        //             rocket::data::ByteUnit::Byte(0 as u64)
-        //         );
-        //     }
-        //     Err(e) => error!("[{id}] Failled to compress due to: {e}"),
-        // }
-
-        // if let Err(e) =
-
-        // {
-        //     error!("[{id}] Failled to compress due to: {e}");
-        //     return;
-        // }
-
-        // let out = bincode::serialize(&compressed_file_content).unwrap();
-
-        // if let Err(e) = file
-        //     .write_all(
-        //         &out,
-        //     )
-        //     .await
-        // {
-        //     error!("[{id}] Could not create data file due to: {e}");
-        //     return;
-        // }
-
-        debug!(
-            "[{id}] Successfully wrote its data, took {}",
-            time::display_duration(start_timer.elapsed())
-        );
-
-        /* -------------------------------------------------------------------------------
-                                    Meta file
-
-            Has all the usefull infos about the data file.
-            I's written at the end so the download method wont find partial data
-        ------------------------------------------------------------------------------- */
-
-        let mut file = match rocket::tokio::fs::File::create(format!("./cache/{id}.meta")).await {
-            Ok(file) => file,
-            Err(e) => {
-                error!("[{id}] Could not create meta file: {e}");
-                return;
-            }
-        };
-        if let Err(e) = file
-            .write_all(
-                serde_json::to_string_pretty(&json!({
-                    "username": metadata.username,
-                    "extension": metadata.file_ext
-                }))
-                .unwrap()
-                .as_bytes(),
-            )
-            .await
-        {
-            error!("[{id}] Could not write meta file due to: {e}");
-        }
-        debug!("[{id}] Successfully wrote meta file");
-    });
+    }
 
     debug!(
-        "[{id}] Success in {}",
+        "[{id}] Responded in {}",
         time::display_duration(start_timer.elapsed())
     );
 

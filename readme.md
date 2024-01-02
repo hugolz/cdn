@@ -16,6 +16,5 @@ Paused for now as it was a porject for work but i don't need it for now
 - [ ] The actual server
     - [x] Web server that we can upload files to
     - [ ] Web server that we can download files from
-    - [ ] Json api
-    - [ ] Save data in ron format
-- [ ] Compression
+    - [x] Json api
+- [x] Compression

@@ -1,9 +1,15 @@
 // #[macro_use]
 // extern crate rocket;
 #[allow(unused_imports)]
+#[macro_use]
+extern crate thiserror;
+
 #[macro_use(trace, debug, info, warn, error)]
 extern crate log;
 
+mod cache;
+mod catchers;
+mod data;
 mod error;
 mod response;
 mod routes;
@@ -31,9 +37,10 @@ async fn main() {
         right_spaces = " ".repeat((width - message.len()) / 2),
     );
 
-    // let rocket = rocket::build();
+    let cache = rocket::tokio::sync::Mutex::new(cache::Cache::default());
 
     let rocket = rocket::build()
+        .manage(cache)
         .attach(rocket::fairing::AdHoc::on_liftoff(
             "log config",
             |_rocket_orbit| {
@@ -42,10 +49,10 @@ async fn main() {
                 })
             },
         ))
-        .register("/", rocket::catchers![error::root_403])
+        .register("/", rocket::catchers![catchers::root_403])
         .register(
             "/json",
-            rocket::catchers![error::upload_json_400, error::upload_json_413],
+            rocket::catchers![catchers::upload_json_400, catchers::upload_json_413],
         )
         .mount(
             "/",
