@@ -1,14 +1,12 @@
 use crate::cache::Cache;
-use rocket::tokio::{sync::Mutex, io::AsyncReadExt};
+use rocket::tokio::sync::Mutex;
 use rocket::{
     http::Status,
     serde::json::{
-        serde_json::{self, json},
+        serde_json::json,
         Json,
     },
-    tokio::io::AsyncWriteExt,
 };
-use std::io::Cursor;
 
 
 #[rocket::post("/json", format = "application/json", data = "<data>")]

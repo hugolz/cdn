@@ -1,25 +1,15 @@
-use crate::cache::Cache;
-use rocket::tokio::{io::AsyncReadExt, sync::Mutex};
-use rocket::{
-    http::Status,
-    serde::json::{
-        serde_json::{self, json},
-        Json,
-    },
-    tokio::io::AsyncWriteExt,
-};
-use std::io::Cursor;
+use rocket::http::Status;
 
 mod download;
 mod upload;
 
+#[allow(unused_imports)] // Used by main.rs
 pub use download::*;
+#[allow(unused_imports)] // Used by main.rs
 pub use upload::*;
-
 
 #[rocket::get("/")]
 pub async fn root() -> crate::response::Response {
-    use std::io::Read as _;
     let msg = "
         Hi, please take a look at the /examples directory to understand how to use this api
     ";
@@ -34,7 +24,6 @@ pub async fn root() -> crate::response::Response {
 
 #[rocket::get("/style.css")]
 pub async fn style() -> crate::response::Response {
-    use std::io::Read as _;
     let buffer = read_static("style.css").unwrap();
 
     crate::response::Response {
@@ -46,7 +35,6 @@ pub async fn style() -> crate::response::Response {
 
 #[rocket::get("/front.js")]
 pub async fn front() -> crate::response::Response {
-    use std::io::Read as _;
     let buffer = read_static("front.js").unwrap();
 
     crate::response::Response {

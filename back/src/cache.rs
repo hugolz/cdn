@@ -1,11 +1,17 @@
 use crate::{data::Metadata, error::CacheError};
 use rocket::serde::json::serde_json::{self, json};
 use rocket::tokio::{self, io::AsyncWriteExt as _};
-use std::sync::{
-    atomic::{AtomicBool, AtomicUsize, Ordering},
-    Arc,
+use std::{
+    str::FromStr,
+    sync::{
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+        Arc,
+    },
 };
 
+const CACHE_DIRECTORY: &'static str = "./cache";
+
+#[derive(Debug)]
 pub struct CacheEntry {
     id: uuid::Uuid,
     metadata: Metadata,
@@ -38,15 +44,65 @@ pub struct Cache {
         the one that are not ready yet.
 
     */
-    // Thread pool
+    // Thread pool, we'll use async executor
     data: Vec<Arc<CacheEntry>>,
     // cache_dir : std::path::Path,
     // Zip archive instead of path ?
 }
 
 impl Cache {
-    pub fn new() -> Self{
-        Self::default()
+    pub fn new() -> Self {
+        let files = std::fs::read_dir(CACHE_DIRECTORY).expect("Could not read cache directory");
+
+        let data = files
+            .flatten()
+            .flat_map(|entry| {
+                let metadata = entry.metadata().unwrap();
+                if metadata.is_dir() {
+                    return None;
+                }
+                let path = entry.path();
+                let id = path.file_stem().unwrap().to_str().unwrap();
+                let ext = path.extension().unwrap().to_str().unwrap();
+                // ignore data files
+                if ext == "data" {
+                    return None;
+                }
+
+                // debug!("{id}, {ext}");
+                let file_content: serde_json::Value =
+                    serde_json::from_str(&std::fs::read_to_string(path.clone()).unwrap()).unwrap();
+                let username = file_content
+                    .get("username")
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .to_string();
+                let file_ext = file_content
+                    .get("extension")
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .to_string();
+                let data_size = file_content
+                    .get("data size")
+                    .unwrap()
+                    .as_number()
+                    .unwrap()
+                    .as_u64()
+                    .unwrap() as usize;
+
+                Some(Arc::new(CacheEntry {
+                    id: uuid::Uuid::from_str(id).unwrap(),
+                    metadata: Metadata { username, file_ext },
+                    is_ready: AtomicBool::new(true),
+                    data_size: AtomicUsize::new(data_size),
+                }))
+            })
+            .collect::<Vec<Arc<CacheEntry>>>();
+        debug!("{data:?}");
+
+        Self { data }
     }
     pub fn store(
         &mut self,
@@ -83,35 +139,40 @@ async fn store(entry: Arc<CacheEntry>, data: Vec<u8>) -> Result<(), CacheError> 
     let id = entry.id.as_hyphenated().to_string();
     let total_timer = std::time::Instant::now();
 
-    let (files, exec_time) = time::timeit_async(||  async{
+    let (files, exec_time) = time::timeit_async(|| async {
         futures::join!(
-            async{
-                Ok(match tokio::fs::File::create(format!("./cache/{id}.data")).await {
-                    Ok(f) => f,
-                    Err(e) =>{
-                        error!("[{id}] Could not create data file: {e}");
-                        return Err(CacheError::FileCreate("data".to_string()));
-                    }
-                })
+            async {
+                Ok(
+                    match tokio::fs::File::create(format!("{CACHE_DIRECTORY}/{id}.data")).await {
+                        Ok(f) => f,
+                        Err(e) => {
+                            error!("[{id}] Could not create data file: {e}");
+                            return Err(CacheError::FileCreate("data".to_string()));
+                        }
+                    },
+                )
             },
-            async{
-                Ok(match tokio::fs::File::create(format!("./cache/{id}.meta")).await {
-                    Ok(file) => file,
-                    Err(e) => {
-                        error!("[{id}] Could not create meta file: {e}");
-                        return Err(CacheError::FileCreate("meta".to_string()));
-                    }
-                })
+            async {
+                Ok(
+                    match tokio::fs::File::create(format!("{CACHE_DIRECTORY}/{id}.meta")).await {
+                        Ok(file) => file,
+                        Err(e) => {
+                            error!("[{id}] Could not create meta file: {e}");
+                            return Err(CacheError::FileCreate("meta".to_string()));
+                        }
+                    },
+                )
             }
         )
-    }).await;
+    })
+    .await;
 
-    // TODO: Fix this 
-    let (mut data_file, mut meta_file) = match files{
+    // TODO: Fix this
+    let (mut data_file, mut meta_file) = match files {
         (Ok(data_file), Ok(meta_file)) => (data_file, meta_file),
         (Ok(_), Err(e)) => return Err(e),
-        (Err(e), Ok(_)) =>  return Err(e),
-        (Err(de), Err(me)) =>  return Err(CacheError::Test),
+        (Err(e), Ok(_)) => return Err(e),
+        (Err(de), Err(me)) => return Err(CacheError::Test),
     };
 
     let (res, data_exec_time) = time::timeit_async(|| async {
