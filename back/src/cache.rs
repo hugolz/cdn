@@ -45,7 +45,7 @@ pub struct Cache {
 
     */
     // Thread pool, we'll use async executor
-    data: Vec<Arc<CacheEntry>>,
+    pub data: Vec<Arc<CacheEntry>>,
     // cache_dir : std::path::Path,
     // Zip archive instead of path ?
 }
@@ -112,7 +112,7 @@ impl Cache {
     ) -> tokio::task::JoinHandle<Result<(), CacheError>> {
         // Compress and store the given cache entry
         let entry = Arc::new(CacheEntry::new(id, meta));
-        // self.data.push(entry.clone());
+        self.data.push(entry.clone());
 
         tokio::spawn(async move { store(entry, data).await })
     }

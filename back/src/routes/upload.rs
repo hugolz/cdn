@@ -16,6 +16,7 @@ pub async fn upload_json(
 ) -> crate::response::JsonApiResponse {
     // Setup
 
+
     let start_timer = std::time::Instant::now();
     let id = uuid::Uuid::new_v4();
     let metadata = data.metadata.clone();
@@ -53,7 +54,9 @@ pub async fn upload_json(
             .build();
     };
 
-    let exec = cache.lock().await.store(id, metadata, file_content);
+    let mut c = cache.lock().await;
+    warn!("Cache size: {}", c.data.len());
+    let exec = c.store(id, metadata, file_content);
 
     if wait_store {
         debug!("[{id}] Waiting for cache to finish storing the data");
