@@ -3,7 +3,7 @@
 ## defaults for ALL profiles
 [default]
 # IP address to serve on.
-address = "127.0.0.1"
+address = "192.168.1.24" # Local addr
 # Port to serve on.
 port = 8000
 # Number of threads to use for executing futures.

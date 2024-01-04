@@ -1,19 +1,24 @@
+use std::net::SocketAddr;
+
 use rocket::http::Status;
 
 mod download;
 mod upload;
+mod dashboard;
 
 #[allow(unused_imports)] // Used by main.rs
 pub use download::*;
 #[allow(unused_imports)] // Used by main.rs
 pub use upload::*;
+#[allow(unused_imports)] // Used by main.rs
+pub use dashboard::*;
 
 #[rocket::get("/")]
-pub async fn root() -> crate::response::Response {
+pub async fn root(remote_addr: SocketAddr) -> crate::response::Response {
     let msg = "
         Hi, please take a look at the /examples directory to understand how to use this api
     ";
-    let buffer = read_static("index.html").unwrap();
+    let buffer = read_static("index.html", remote_addr).unwrap();
 
     crate::response::Response {
         status: Status::Ok,
@@ -23,8 +28,8 @@ pub async fn root() -> crate::response::Response {
 }
 
 #[rocket::get("/style.css")]
-pub async fn style() -> crate::response::Response {
-    let buffer = read_static("style.css").unwrap();
+pub async fn style(remote_addr: SocketAddr) -> crate::response::Response {
+    let buffer = read_static("style.css", remote_addr).unwrap();
 
     crate::response::Response {
         status: Status::Ok,
@@ -34,8 +39,8 @@ pub async fn style() -> crate::response::Response {
 }
 
 #[rocket::get("/front.js")]
-pub async fn front() -> crate::response::Response {
-    let buffer = read_static("front.js").unwrap();
+pub async fn front(remote_addr: SocketAddr) -> crate::response::Response {
+    let buffer = read_static("front.js", remote_addr).unwrap();
 
     crate::response::Response {
         status: Status::Ok,
@@ -45,8 +50,8 @@ pub async fn front() -> crate::response::Response {
 }
 
 #[rocket::get("/front_bg.wasm")]
-pub fn wasm() -> crate::response::Response {
-    let buffer = read_static("front_bg.wasm").unwrap();
+pub fn wasm(remote_addr: SocketAddr) -> crate::response::Response {
+    let buffer = read_static("front_bg.wasm", remote_addr).unwrap();
     crate::response::Response {
         status: Status::Ok,
         content: buffer,
@@ -54,8 +59,9 @@ pub fn wasm() -> crate::response::Response {
     }
 }
 
-fn read_static(file_name: &str) -> Option<Vec<u8>> {
+fn read_static(file_name: &str, remote_addr: SocketAddr) -> Option<Vec<u8>> {
     use std::io::Read as _;
+    debug!("New static file query from {remote_addr}: {file_name}");
     let mut buffer = Vec::new();
     let _size = std::fs::File::open(format!("./static/{file_name}"))
         .ok()?

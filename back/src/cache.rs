@@ -117,7 +117,7 @@ impl Cache {
         tokio::spawn(async move { store(entry, data).await })
     }
 
-    pub async fn load(&mut self, id: uuid::Uuid) -> Result<(Metadata, Vec<u8>), CacheError> {
+    pub async fn load(&self, id: uuid::Uuid) -> Result<(Metadata, Vec<u8>), CacheError> {
         // Load and decompress the given cache entry
         let entry = self.data.iter().find(|e| e.id == id).ok_or(CacheError::NotFound)?;
 

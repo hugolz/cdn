@@ -30,7 +30,7 @@ async fn main() {
         message = "Program start"
     );
 
-    let cache = rocket::tokio::sync::Mutex::new(cache::Cache::new());
+    let cache = rocket::tokio::sync::RwLock::new(cache::Cache::new());
 
     let rocket = rocket::build()
         .manage(cache)
@@ -56,7 +56,8 @@ async fn main() {
                 routes::wasm,
                 routes::upload_json,
                 routes::basic_upload,
-                routes::basic_download
+                routes::basic_download,
+                routes::dashboard_cache_count
             ],
         )
         .ignite()

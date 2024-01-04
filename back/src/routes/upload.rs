@@ -1,5 +1,5 @@
 use crate::cache::Cache;
-use rocket::tokio::sync::Mutex;
+use rocket::tokio::sync::RwLock;
 use rocket::{
     http::Status,
     serde::json::{
@@ -12,7 +12,7 @@ use rocket::{
 #[rocket::post("/json", format = "application/json", data = "<data>")]
 pub async fn upload_json(
     data: Json<crate::data::UploadData>,
-    cache: &rocket::State<Mutex<Cache>>,
+    cache: &rocket::State<RwLock<Cache>>,
 ) -> crate::response::JsonApiResponse {
     // Setup
 
@@ -54,7 +54,7 @@ pub async fn upload_json(
             .build();
     };
 
-    let mut c = cache.lock().await;
+    let mut c = cache.write().await;
     warn!("Cache size: {}", c.data.len());
     let exec = c.store(id, metadata, file_content);
 
