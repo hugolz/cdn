@@ -6,7 +6,7 @@ use std::{
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
-    },
+    }, io::Read,
 };
 
 const CACHE_DIRECTORY: &'static str = "./cache";
@@ -117,10 +117,22 @@ impl Cache {
         tokio::spawn(async move { store(entry, data).await })
     }
 
-    pub fn load(&mut self, id: uuid::Uuid) -> Result<(Metadata, String), CacheError> {
+    pub async fn load(&mut self, id: uuid::Uuid) -> Result<(Metadata, Vec<u8>), CacheError> {
         // Load and decompress the given cache entry
+        let entry = self.data.iter().find(|e| e.id == id).ok_or(CacheError::NotFound)?;
 
-        Err(CacheError::Test)
+        let mut raw_compressed = Vec::new();
+
+        let mut _read = std::fs::File::open(format!("{CACHE_DIRECTORY}/{id}.data")).unwrap().read_to_end(&mut raw_compressed);
+
+        let mut raw = Vec::new();
+        brotli::BrotliDecompress(&mut std::io::Cursor::new(raw_compressed), &mut raw).unwrap();
+
+        Ok((
+            entry.metadata.clone(),
+            raw
+        ))
+
     }
 }
 

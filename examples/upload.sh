@@ -1,9 +1,9 @@
 #!/bin/bash
 
 username="hugo"
-file_path="./assets/dummy"
+file_path="./assets/image_50435585.JPG"
 
-file_ext=""
+file_ext="jpg"
 endpoint="http://127.0.0.1:8000/json" 
 
 # Don't forget the -w 0 else the output will be escaped and escape chars are not allowed in serde::json

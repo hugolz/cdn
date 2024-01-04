@@ -11,4 +11,7 @@ pub enum CacheError {
 
     #[error("Could not compress the given data")]
     Compression,
+
+    #[error("The given id doesn't correspond to any saved cache")]
+    NotFound
 }
