@@ -45,6 +45,9 @@ pub struct Cache {
 }
 
 impl Cache {
+    pub fn new() -> Self{
+        Self::default()
+    }
     pub fn store(
         &mut self,
         id: uuid::Uuid,

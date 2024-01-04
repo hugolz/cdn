@@ -3,7 +3,7 @@ set -e
 
 RUST_LOG="walrus=error"
 
-mode=release # debug, release
+mode=debug # debug, release
 
 out_dir=./front/out
 

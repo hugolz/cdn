@@ -1,6 +1,6 @@
 #!/bin/sh
 
-mode=release # debug, release
+mode=debug # debug, release
 
 echo Compiling back
 if [ "$mode" = release ]

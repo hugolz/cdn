@@ -23,21 +23,14 @@ async fn main() {
         .add_filter("rocket", log::LevelFilter::Warn);
     logger::init(logcfg, Some("log/server.log"));
 
-    let width = 30;
-    let message = "Program start";
-    let chr = "─";
-
     // Small print to show the start of the program log in the file
     trace!(
-        "\n╭{line}╮\n│{left_spaces}{text}{right_spaces}{conditional_space}│\n╰{line}╯",
-        line = chr.repeat(width),
-        left_spaces = " ".repeat((width - message.len()) / 2),
-        text = message,
-        conditional_space = " ".repeat(if width % 2 == 0 { 1 } else { 0 }),
-        right_spaces = " ".repeat((width - message.len()) / 2),
+        "\n╭{line}╮\n│{message:^30}│\n╰{line}╯",
+        line = "─".repeat(30),
+        message = "Program start"
     );
 
-    let cache = rocket::tokio::sync::Mutex::new(cache::Cache::default());
+    let cache = rocket::tokio::sync::Mutex::new(cache::Cache::new());
 
     let rocket = rocket::build()
         .manage(cache)
@@ -60,10 +53,10 @@ async fn main() {
                 routes::root,
                 routes::style,
                 routes::front,
-                routes::serve_wasm,
+                routes::wasm,
                 routes::upload_json,
                 routes::basic_upload,
-                routes::download
+                routes::basic_download
             ],
         )
         .ignite()
@@ -80,11 +73,14 @@ async fn main() {
     /*-------------------
         Save as static
     -------------------*/
+    // Safety:
+    //  This will only be writen once and at the reads are not yet loaded because the sever is not yet launched
     unsafe { JSON_REQ_LIMIT = rocket.config().limits.get("json").unwrap() }
 
     rocket.launch().await.unwrap();
 }
 
+/// Displays the config in the console
 fn display_config<'a>(
     rocket_cfg: &rocket::Config,
     rocket_routes: impl Iterator<Item = &'a rocket::Route>,
