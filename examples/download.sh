@@ -1,8 +1,8 @@
 #!/bin/bash
 
-id="3d647372-cf66-412f-92ae-18c3dcc9ca72"
+id="cfaf675a-b929-4d82-ac10-d2e38814988a"
 
-endpoint="http://127.0.0.1:8000/" 
+endpoint="http://192.168.1.24:8000/" 
 
 curl "${endpoint}${id}" > out.json
 

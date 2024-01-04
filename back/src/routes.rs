@@ -2,16 +2,16 @@ use std::net::SocketAddr;
 
 use rocket::http::Status;
 
+mod dashboard;
 mod download;
 mod upload;
-mod dashboard;
 
+#[allow(unused_imports)] // Used by main.rs
+pub use dashboard::*;
 #[allow(unused_imports)] // Used by main.rs
 pub use download::*;
 #[allow(unused_imports)] // Used by main.rs
 pub use upload::*;
-#[allow(unused_imports)] // Used by main.rs
-pub use dashboard::*;
 
 #[rocket::get("/")]
 pub async fn root(remote_addr: SocketAddr) -> crate::response::Response {

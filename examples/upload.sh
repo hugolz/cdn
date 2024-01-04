@@ -1,10 +1,10 @@
 #!/bin/bash
 
 username="hugo"
-file_path="./assets/image_50435585.JPG"
+file_path="./assets/rocket.png"
 
-file_ext="jpg"
-endpoint="http://127.0.0.1:8000/json" 
+file_ext="png"
+endpoint="http://192.168.1.24:8000/json" 
 
 # Don't forget the -w 0 else the output will be escaped and escape chars are not allowed in serde::json
 file_base64=$(base64 -w 0 "$file_path")

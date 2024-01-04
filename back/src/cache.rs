@@ -1,14 +1,15 @@
 use crate::{data::Metadata, error::CacheError};
 use rocket::serde::json::serde_json::{self, json};
+use rocket::tokio::io::AsyncReadExt;
 use rocket::tokio::{self, io::AsyncWriteExt as _};
 use std::{
+    io::Read,
     str::FromStr,
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
-    }, io::Read,
+    },
 };
-
 const CACHE_DIRECTORY: &'static str = "./cache";
 
 #[derive(Debug)]
@@ -119,29 +120,34 @@ impl Cache {
 
     pub async fn load(&self, id: uuid::Uuid) -> Result<(Metadata, Vec<u8>), CacheError> {
         // Load and decompress the given cache entry
-        let entry = self.data.iter().find(|e| e.id == id).ok_or(CacheError::NotFound)?;
+        let entry = self
+            .data
+            .iter()
+            .find(|e| e.id == id)
+            .ok_or(CacheError::NotFound)?;
 
         let mut raw_compressed = Vec::new();
 
-        let mut _read = std::fs::File::open(format!("{CACHE_DIRECTORY}/{id}.data")).unwrap().read_to_end(&mut raw_compressed);
+        let file_path = format!("{CACHE_DIRECTORY}/{id}.data");
+
+        let mut read = tokio::fs::File::open(file_path.clone())
+            .await
+            .map_err(|_| CacheError::FileOpen(file_path))?
+            .read_to_end(&mut raw_compressed)
+            .await
+            .unwrap();
 
         let mut raw = Vec::new();
         brotli::BrotliDecompress(&mut std::io::Cursor::new(raw_compressed), &mut raw).unwrap();
 
-        Ok((
-            entry.metadata.clone(),
-            raw
-        ))
-
+        Ok((entry.metadata.clone(), raw))
     }
 }
 
 // pub struct CacheHandle {
 //     /*
 //         This will be used as a lightweight controller that we can use to
-
-//         to save and ecrypt, just send the data and the cache save
-
+//         to save and encrypt, just send the data and the cache save
 //     */
 // }
 

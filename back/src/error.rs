@@ -9,9 +9,12 @@ pub enum CacheError {
     #[error("Could not write to file: {0}")]
     FileWrite(String),
 
+    #[error("Could not open file: {0}")]
+    FileOpen(String),
+
     #[error("Could not compress the given data")]
     Compression,
 
     #[error("The given id doesn't correspond to any saved cache")]
-    NotFound
+    NotFound,
 }

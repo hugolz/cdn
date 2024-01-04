@@ -48,8 +48,7 @@ impl Default for JsonApiResponseBuilder {
     }
 }
 
-
-pub struct Response{
+pub struct Response {
     pub status: Status,
     pub content: Vec<u8>,
     pub c_type: rocket::http::ContentType,

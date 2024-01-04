@@ -2,12 +2,8 @@ use crate::cache::Cache;
 use rocket::tokio::sync::RwLock;
 use rocket::{
     http::Status,
-    serde::json::{
-        serde_json::json,
-        Json,
-    },
+    serde::json::{serde_json::json, Json},
 };
-
 
 #[rocket::post("/json", format = "application/json", data = "<data>")]
 pub async fn upload_json(
@@ -15,7 +11,6 @@ pub async fn upload_json(
     cache: &rocket::State<RwLock<Cache>>,
 ) -> crate::response::JsonApiResponse {
     // Setup
-
 
     let start_timer = std::time::Instant::now();
     let id = uuid::Uuid::new_v4();
