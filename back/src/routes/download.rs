@@ -14,6 +14,7 @@ use rocket::{
 pub async fn basic_download(id: &str, cache: &rocket::State<RwLock<Cache>>) -> JsonApiResponse {
     debug!("Download request of: {id}");
     let Ok(id) = uuid::Uuid::from_str(id) else {
+        warn!("Could not understand given id: {id}");
         return JsonApiResponseBuilder::default()
             .with_json(json!( {
                 "message": "could not understand given id",

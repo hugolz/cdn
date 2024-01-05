@@ -9,5 +9,3 @@ exclude = [
 
 [profile.dev.package."*"]
 opt-level = 3
-
-[workspace.dependencies]
