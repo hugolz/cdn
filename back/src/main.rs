@@ -1,5 +1,3 @@
-// #[macro_use]
-// extern crate rocket;
 #[allow(unused_imports)]
 #[macro_use]
 extern crate thiserror;
@@ -33,14 +31,6 @@ async fn main() {
 
     let rocket = rocket::build()
         .manage(cache)
-        .attach(rocket::fairing::AdHoc::on_liftoff(
-            "log config",
-            |_rocket_orbit| {
-                std::boxed::Box::pin(async move {
-                    debug!("Hi"); // Was used to do some tests
-                })
-            },
-        ))
         .register("/", rocket::catchers![catchers::root_403])
         .register(
             "/json",
@@ -56,23 +46,15 @@ async fn main() {
                 routes::upload_json,
                 routes::basic_upload,
                 routes::basic_download,
-                routes::dashboard_cache_count
+                routes::cache_list
             ],
         )
         .ignite()
         .await
         .unwrap();
 
-    /*----------------------------
-
-        Display the startup data
-
-    ----------------------------*/
     display_config(rocket.config(), rocket.routes(), rocket.catchers());
 
-    /*-------------------
-        Save as static
-    -------------------*/
     // Safety:
     //  This will only be writen once and at the reads are not yet loaded because the sever is not yet launched
     unsafe { JSON_REQ_LIMIT = rocket.config().limits.get("json").unwrap() }

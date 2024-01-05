@@ -2,8 +2,8 @@ use crate::cache::Cache;
 use rocket::serde::json::serde_json::{json, Value};
 use rocket::tokio::sync::RwLock;
 
-#[rocket::get("/dashboard")]
-pub async fn dashboard_cache_count(cache: &rocket::State<RwLock<Cache>>) -> String {
+#[rocket::get("/cache_list")]
+pub async fn cache_list(cache: &rocket::State<RwLock<Cache>>) -> String {
     let data = cache
         .read()
         .await
@@ -12,5 +12,5 @@ pub async fn dashboard_cache_count(cache: &rocket::State<RwLock<Cache>>) -> Stri
         .map(|cache_entry| rocket::serde::json::to_string(&**cache_entry).unwrap())
         .collect::<Vec<String>>();
 
-    format!("{data:?}",)
+    format!("{data:?}")
 }
