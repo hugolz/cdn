@@ -7,7 +7,7 @@ use rocket::{
 
 #[rocket::post("/json", format = "application/json", data = "<data>")]
 pub async fn upload_json(
-    data: Json<crate::data::UploadData>,
+    data: Json<shared::data::UploadData>,
     cache: &rocket::State<RwLock<Cache>>,
 ) -> crate::response::JsonApiResponse {
     // Setup

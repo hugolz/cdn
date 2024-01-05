@@ -12,7 +12,7 @@ use web_sys::{Request, RequestInit, RequestMode, Response};
 
 /* NOTE :
     When making a request, if you do not specifiy http:// at the start of the url
-    The url will be interpreted as an endpoint of the server 
+    The url will be interpreted as an endpoint of the server
 */
 
 // Define the possible messages which can be sent to the component
@@ -57,9 +57,9 @@ async fn fetch_dashboard(url: &'static str) -> Result<DashboardData, FetchError>
     let text = JsFuture::from(resp.text()?).await?;
     console::log!(text.as_string().unwrap());
 
-    Ok(
-        DashboardData { count: text.as_string().unwrap().parse().unwrap() }
-    )
+    Ok(DashboardData {
+        count: text.as_string().unwrap().parse().unwrap(),
+    })
 }
 
 /// Something wrong has occurred while fetching an external resource.
@@ -109,7 +109,7 @@ impl Component for App {
             }
             Msg::FetchDashboard => {
                 ctx.link().send_future(async {
-                    match fetch_dashboard("/dashboard/cache_count").await {
+                    match fetch_dashboard("/dashboard").await {
                         Ok(db) => Msg::SetDashboardFetchState(FetchState::Success(db)),
                         Err(err) => Msg::SetDashboardFetchState(FetchState::Failed(err)),
                     }
@@ -122,23 +122,23 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        match self.dashboard_data{
-            FetchState::NotFetching => html!{
-                <div> 
+        match self.dashboard_data {
+            FetchState::NotFetching => html! {
+                <div>
                     <p>{"NotFetching"}</p>
-                    <button onclick={ctx.link().callback(|_| Msg::FetchDashboard)}>
+                    <button onclick = {ctx.link().callback(|_| Msg::FetchDashboard)}>
                         { "Get Dashboard" }
                     </button>
                 </div>
             },
-            FetchState::Fetching => html!{<p>{"Fetching"}</p> },
-            FetchState::Success(ref data) => html!{
+            FetchState::Fetching => html! {<p>{"Fetching"}</p> },
+            FetchState::Success(ref data) => html! {
                 <div>
                     <p>{"Success"}</p>
                     <p>{format!("{data:?}")}</p>
                 </div>
             },
-            FetchState::Failed(_) =>html!{<p>{"Failed"}</p> },
+            FetchState::Failed(_) => html! {<p>{"Failed"}</p> },
         }
     }
 }

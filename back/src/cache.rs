@@ -1,5 +1,5 @@
-use crate::{data::Metadata, error::CacheError};
-use rocket::serde::json::serde_json::{self, json};
+use crate::{ error::CacheError};
+use rocket::serde::{json::serde_json::{self, json}, Serialize};
 use rocket::tokio::io::AsyncReadExt;
 use rocket::tokio::{self, io::AsyncWriteExt as _};
 use std::{
@@ -10,32 +10,11 @@ use std::{
         Arc,
     },
 };
+use shared::data::{Metadata,CacheEntry};
+
 const CACHE_DIRECTORY: &'static str = "./cache";
 
-#[derive(Debug)]
-pub struct CacheEntry {
-    id: uuid::Uuid,
-    metadata: Metadata,
-    is_ready: AtomicBool,
-    data_size: AtomicUsize,
-}
 
-impl CacheEntry {
-    pub fn new(id: uuid::Uuid, metadata: Metadata) -> Self {
-        Self {
-            id,
-            metadata,
-            is_ready: AtomicBool::new(false),
-            data_size: AtomicUsize::new(0),
-        }
-    }
-    pub fn is_ready(&self) -> bool {
-        self.is_ready.load(Ordering::Relaxed)
-    }
-    pub fn set_ready(&mut self, rdy: bool) {
-        self.is_ready.store(rdy, Ordering::Relaxed)
-    }
-}
 
 #[derive(Default)]
 pub struct Cache {

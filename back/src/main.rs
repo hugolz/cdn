@@ -9,7 +9,6 @@ extern crate log;
 
 mod cache;
 mod catchers;
-mod data;
 mod error;
 mod response;
 mod routes;

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-id="cfaf675a-b929-4d82-ac10-d2e38814988a"
+id="96acf314-531c-4fc8-89cc-c585e0ced6da"
 
 endpoint="http://192.168.1.24:8000/" 
 
