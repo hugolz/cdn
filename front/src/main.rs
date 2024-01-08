@@ -1,4 +1,4 @@
-use gloo::console;
+use gloo::{console, utils::format::JsValueSerdeExt};
 use js_sys::Date;
 use wasm_bindgen::prelude::wasm_bindgen;
 use yew::{html, Component, Context, Html};
@@ -24,7 +24,7 @@ pub enum Msg {
 }
 #[derive(Debug)]
 pub struct DashboardData {
-    count: i32,
+    cache_list: Vec<shared::data::CacheEntry>,
 }
 
 pub struct App {
@@ -54,12 +54,17 @@ async fn fetch_dashboard(url: &'static str) -> Result<DashboardData, FetchError>
     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
     let resp: Response = resp_value.dyn_into().unwrap();
 
-    let text = JsFuture::from(resp.text()?).await?;
-    console::log!(text.as_string().unwrap());
+    let json_data = JsFuture::from(resp.json()?).await?;
+    console::log!(json_data.clone());
 
-    Ok(DashboardData {
-        count: text.as_string().unwrap().parse().unwrap(),
-    })
+    let x = json_data
+        .into_serde::<Vec<String>>()
+        .unwrap()
+        .iter()
+        .map(|s| serde_json::from_str(&s).unwrap())
+        .collect::<Vec<shared::data::CacheEntry>>();
+
+    Ok(DashboardData { cache_list: x })
 }
 
 /// Something wrong has occurred while fetching an external resource.
@@ -109,7 +114,7 @@ impl Component for App {
             }
             Msg::FetchDashboard => {
                 ctx.link().send_future(async {
-                    match fetch_dashboard("/dashboard").await {
+                    match fetch_dashboard("/cache_list").await {
                         Ok(db) => Msg::SetDashboardFetchState(FetchState::Success(db)),
                         Err(err) => Msg::SetDashboardFetchState(FetchState::Failed(err)),
                     }
@@ -132,12 +137,25 @@ impl Component for App {
                 </div>
             },
             FetchState::Fetching => html! {<p>{"Fetching"}</p> },
-            FetchState::Success(ref data) => html! {
-                <div>
-                    <p>{"Success"}</p>
-                    <p>{format!("{data:?}")}</p>
-                </div>
-            },
+            FetchState::Success(ref data) => {
+                let mut card_list = Vec::new();
+
+                for entry in data.cache_list.iter() {
+                    card_list.push(html! {
+                        <div class="card">
+                            <p>{format!("{}",entry.id)}</p>
+                            <p>{format!("{:?}", entry.data_size)}</p>
+                        </div>
+                    });
+                }
+
+                html! {
+                    <div>
+                        <p>{"Success"}</p>
+                        <p>{card_list}</p>
+                    </div>
+                }
+            }
             FetchState::Failed(_) => html! {<p>{"Failed"}</p> },
         }
     }

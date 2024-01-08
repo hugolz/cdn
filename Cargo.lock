@@ -495,9 +495,14 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "gloo 0.11.0",
+ "gloo-utils 0.1.7",
  "js-sys",
  "reqwest",
  "serde",
+ "serde-json-wasm",
+ "serde-wasm-bindgen 0.6.3",
+ "serde_json",
+ "shared",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2035,6 +2040,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-json-wasm"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83c37d03f3b0f6b5f77c11af1e7c772de1c9af83e50bef7bb6069601900ba67b"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde-wasm-bindgen"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2069,9 +2083,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.110"
+version = "1.0.111"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fbd975230bada99c8bb618e0c365c2eefa219158d5c6c29610fd09ff1833257"
+checksum = "176e46fa42316f18edd598015a5166857fc835ec732f5215eac6b7bdbf0a84f4"
 dependencies = [
  "itoa",
  "ryu",
@@ -2603,6 +2617,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ed0d4f68a3015cc185aff4db9506a015f4b96f95303897bfa23f846db54064e"
 dependencies = [
  "cfg-if",
+ "serde_json",
  "wasm-bindgen-macro",
 ]
 

@@ -48,8 +48,13 @@ pub async fn upload_json(
             .build();
     };
 
-    let exec = cache.write().await.store(id, metadata, file_content);
-    
+    let mut cache_handle = cache.write().await;
+
+    let exec = cache_handle.store(id, metadata, file_content);
+        
+    // Release the lock to ba able to wait the end of the 'exec' without denying other calls
+    drop(cache_handle);
+
     if wait_store {
         debug!("[{id}] Waiting for cache to finish storing the data");
         if let Err(e) = exec.await.unwrap() {
