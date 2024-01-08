@@ -16,7 +16,7 @@ pub async fn upload_json(
     let id = uuid::Uuid::new_v4();
     let metadata = data.metadata.clone();
     let file_data = &data.file;
-    let wait_store = false;
+    let wait_store = true;
 
     // Validation of user input
 
@@ -29,7 +29,6 @@ pub async fn upload_json(
             .with_status(Status::BadRequest).build();
     }
 
-    // Start
     debug!(
         "Received new upload request on /json\nUsing id: {id}\nUsername: {}\nFile ext: {}\nFile size: {}",
         metadata.username,
@@ -49,14 +48,18 @@ pub async fn upload_json(
             .build();
     };
 
-    let mut c = cache.write().await;
-    warn!("Cache size: {}", c.data.len());
-    let exec = c.store(id, metadata, file_content);
-
+    let exec = cache.write().await.store(id, metadata, file_content);
+    
     if wait_store {
         debug!("[{id}] Waiting for cache to finish storing the data");
         if let Err(e) = exec.await.unwrap() {
             error!("[{id}] An error occured while storing the given data: {e}");
+            return crate::response::JsonApiResponseBuilder::default()
+            .with_json(
+                json!({"result": "failled", "message": "An error occured while caching the data"}),
+            )
+            .with_status(Status::InternalServerError)
+            .build();
         }
     }
 
