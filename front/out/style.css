@@ -1,0 +1,73 @@
+:root{
+  --text: rgb(119, 40, 48);
+  --text2: rgb(200, 166, 90);
+  --background: rgb(10, 10, 20);
+  --primary: rgb(240, 180, 125);
+  --secondary: rgb(17, 150, 75);
+  --accent: rgb(27, 220, 230);
+}
+
+
+body{
+  background-color: var(--background);
+  color: white;
+}
+
+button {
+  background-color: var(--secondary); 
+  border: 0;
+  color: var(--text);
+  padding: 14px 14px;
+  text-align: center;
+  font-size: 16px;
+  margin: 2px 2px;
+  width: 100px;
+}
+
+.counter {
+  color: #008f53;
+  font-size: 48px;
+  text-align: center;
+}
+
+.footer {
+  text-align: center;
+  font-size: 12px;
+}
+
+.panel {
+  display: flex;
+  justify-content: center;
+}
+
+.card{
+  background-color: var(--secondary);
+  color:var(--text);
+  border: 2px solid white;
+  margin-bottom: 10px;
+  border-radius: 1% ;
+  margin-left: 10%;
+  margin-right: 10%;
+  text-align: center;
+  padding: 20px;
+}
+
+tr:first-child th:nth-child(2){
+    color: blue;
+    font-size: 2em;
+}
+.key{
+  color: var(--text);
+  margin-right: 2%;
+}
+
+.value{
+  color: var(--text2);
+}
+
+.ready{
+
+}
+.not_ready{
+
+}
