@@ -117,13 +117,15 @@ impl Cache {
             .await
         {
             error!("{e}");
-            return Err(CacheError::FileRead(format!("{e}")))
+            return Err(CacheError::FileRead(format!("{e}")));
         }
 
         let mut raw = Vec::new();
-        if let Err(e) = brotli::BrotliDecompress(&mut std::io::Cursor::new(raw_compressed), &mut raw){
+        if let Err(e) =
+            brotli::BrotliDecompress(&mut std::io::Cursor::new(raw_compressed), &mut raw)
+        {
             error!("[{id}]Decompression failed:{e}");
-            return Err(CacheError::Decompression)
+            return Err(CacheError::Decompression);
         }
 
         Ok((entry.metadata.clone(), raw))

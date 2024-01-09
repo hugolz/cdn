@@ -9,12 +9,13 @@ def main():
         data = json.loads(file.read())
 
     fdata = data["file"]
+    ext = data["metadata"]["file_ext"]
 
     decoded_file = base64.b64decode(str(fdata))
 
     print(len(decoded_file))
 
-    with open("img2.png", "wb") as file:
+    with open(f"img.{ext}", "wb") as file:
         file.write(decoded_file)
 
 

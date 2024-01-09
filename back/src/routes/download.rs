@@ -17,7 +17,7 @@ pub async fn basic_download(id: &str, cache: &rocket::State<RwLock<Cache>>) -> J
         warn!("Could not understand given id: {id}");
         return JsonApiResponseBuilder::default()
             .with_json(json!( {
-                "message": "could not understand given id",
+                "message": format!("could not understand given id: {id}"),
                 "result": "denied"
             }))
             .with_status(Status::BadRequest)
@@ -25,6 +25,7 @@ pub async fn basic_download(id: &str, cache: &rocket::State<RwLock<Cache>>) -> J
     };
     let (meta, data) = cache.read().await.load(id).await.unwrap();
 
+    // let data_b64 = String::from_utf8(data).unwrap();
     let data_b64 = rbase64::encode(&data);
 
     JsonApiResponseBuilder::default()

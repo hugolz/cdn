@@ -19,7 +19,6 @@ pub struct UploadData {
     pub file: String,
 }
 
-
 impl CacheEntry {
     pub fn new(id: uuid::Uuid, metadata: Metadata) -> Self {
         Self {
@@ -33,6 +32,7 @@ impl CacheEntry {
         self.is_ready.load(std::sync::atomic::Ordering::Relaxed)
     }
     pub fn set_ready(&mut self, rdy: bool) {
-        self.is_ready.store(rdy, std::sync::atomic::Ordering::Relaxed)
+        self.is_ready
+            .store(rdy, std::sync::atomic::Ordering::Relaxed)
     }
 }

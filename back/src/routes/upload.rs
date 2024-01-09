@@ -20,6 +20,8 @@ pub async fn upload_json(
 
     // Validation of user input
 
+    debug!("/json upload");
+
     if !regex::Regex::new(r"^[A-Za-z0-9]*$")
         .unwrap()
         .is_match(&metadata.file_ext)
@@ -35,6 +37,7 @@ pub async fn upload_json(
         metadata.file_ext,
         rocket::data::ByteUnit::Byte(file_data.len() as u64)
     );
+    use std::io::Write as _;
 
     // Decode user input | Decoding makes the compression 'faster' koz it has less data to compress
     // let file_content = file_data.clone().into_bytes();
@@ -51,7 +54,7 @@ pub async fn upload_json(
     let mut cache_handle = cache.write().await;
 
     let exec = cache_handle.store(id, metadata, file_content);
-        
+
     // Release the lock to ba able to wait the end of the 'exec' without denying other calls
     drop(cache_handle);
 
@@ -87,4 +90,38 @@ pub async fn basic_upload(file: rocket::Data<'_>) -> String {
         return "Failled to unpack the file".to_string();
     };
     format!("Received file with len: {}", buff.len())
+}
+
+#[rocket::options("/json")]
+pub fn option_json() -> crate::response::JsonApiResponse {
+    /*
+        We're currently having issues connecting a NextJs sevrer to this storage server
+
+        we belive that his might help
+        but we have no idea what to set here and in the NextJs config
+
+        The thing is that test_upload (in front/main.rs) works fine, and do somewaht the same thing as the NextJs
+
+        CORS errors..
+    */
+    warn!("option req");
+    crate::response::JsonApiResponseBuilder::default()
+        .with_status(Status::NoContent)
+        // .with_header("Access-Control-Allow-Origin", "*")
+        // .with_header("Access-Control-Allow-Method", "POST")
+        // .with_header("Access-Control-Allow-Headers", "X-PINGOTHER, Content-Type")
+
+
+        
+        // .with_header("Content-Type", "text/plain")
+        // .with_header("Access-Control-Allow-Origin", "*")
+        // .with_header("Access-Control-Allow-Cedentials", "true")
+        // .with_header("Access-Control-Expose-Headers", "*")
+        // .with_header("Access-Control-Max-Age", "5")
+        // .with_header("Access-Control-Allow-Method", "POST,OPTIONS,GET")
+        // .with_header(
+        //     "Access-Control-Allow-Headers",
+        //     "Content-Type",
+        // )
+        .build()
 }

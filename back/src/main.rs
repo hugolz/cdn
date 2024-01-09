@@ -46,7 +46,8 @@ async fn main() {
                 routes::upload_json,
                 routes::basic_upload,
                 routes::basic_download,
-                routes::cache_list
+                routes::cache_list,
+                routes::option_json
             ],
         )
         .ignite()

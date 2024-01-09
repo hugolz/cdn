@@ -2,5 +2,6 @@
 /cache/*
 /log/*
 /tests/*
-/front/out
+/front/out/*.js
+/front/out/*.wasm
 /static/*

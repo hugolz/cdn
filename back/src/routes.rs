@@ -61,7 +61,7 @@ pub fn wasm(remote_addr: SocketAddr) -> crate::response::Response {
 
 fn read_static(file_name: &str, remote_addr: SocketAddr) -> Option<Vec<u8>> {
     use std::io::Read as _;
-    debug!("New static file query from {remote_addr}: {file_name}");
+    trace!("New static file query from {remote_addr}: {file_name}");
     let mut buffer = Vec::new();
     let _size = std::fs::File::open(format!("./static/{file_name}"))
         .ok()?

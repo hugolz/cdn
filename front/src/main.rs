@@ -40,6 +40,33 @@ pub enum FetchState<T> {
     Failed(FetchError),
 }
 
+async fn test_upload() -> Result<(), FetchError> {
+    let mut init = RequestInit::new();
+    init.method("POST");
+    init.mode(RequestMode::Cors);
+
+    init.body(Some(&JsValue::from_str(
+        "{\"metadata\": {\"username\": \"Hugo\",\"file_ext\": \"png\"},\"file\": \"Empty\"}",
+    )));
+
+    let request = Request::new_with_str_and_init("http://192.168.1.24:8000/json", &init)?;
+
+    request
+        .headers()
+        .set("Content-Type", "application/json")
+        .unwrap();
+
+    let window = gloo::utils::window();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+    let resp: Response = resp_value.dyn_into().unwrap();
+
+    let json_data = JsFuture::from(resp.json()?).await?;
+
+    console::log!(json_data);
+
+    Ok(())
+}
+
 async fn fetch_dashboard(url: &'static str) -> Result<DashboardData, FetchError> {
     let mut opts = RequestInit::new();
     opts.method("GET");
@@ -89,7 +116,15 @@ impl Component for App {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
+        // ctx.link().send_message(Msg::FetchDashboard);
+        ctx.link().send_future(async {
+            test_upload().await.unwrap();
+            Msg::SetDashboardFetchState(FetchState::Failed(FetchError {
+                err: JsValue::from_str("all good"),
+            }))
+        });
+
         Self {
             value: 0,
             dashboard_data: FetchState::NotFetching,
@@ -143,15 +178,22 @@ impl Component for App {
                 for entry in data.cache_list.iter() {
                     card_list.push(html! {
                         <div class="card">
-                            <p>{format!("{}",entry.id)}</p>
-                            <p>{format!("{:?}", entry.data_size)}</p>
+                            <table>
+                            <tr>
+                                <td class="key">
+                                    {format!("Id: ")}
+                                </td>
+                                <td class="value">
+                                    {format!("{}", entry.id)}
+                                </td>
+                            </tr>
+                            </table>
                         </div>
                     });
                 }
 
                 html! {
                     <div>
-                        <p>{"Success"}</p>
                         <p>{card_list}</p>
                     </div>
                 }
