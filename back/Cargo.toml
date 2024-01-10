@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "storage_sevrer"
+name = "storage_server"
 path = "src/main.rs"
 
 [dependencies]
