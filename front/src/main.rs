@@ -49,7 +49,7 @@ async fn test_upload() -> Result<(), FetchError> {
         "{\"metadata\": {\"username\": \"Hugo\",\"file_ext\": \"png\"},\"file\": \"Empty\"}",
     )));
 
-    let request = Request::new_with_str_and_init("http://192.168.1.24:8000/json", &init)?;
+    let request = Request::new_with_str_and_init("http://192.168.1.24:8001/json", &init)?;
 
     request
         .headers()
@@ -117,13 +117,13 @@ impl Component for App {
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
-        // ctx.link().send_message(Msg::FetchDashboard);
-        ctx.link().send_future(async {
-            test_upload().await.unwrap();
-            Msg::SetDashboardFetchState(FetchState::Failed(FetchError {
-                err: JsValue::from_str("all good"),
-            }))
-        });
+        ctx.link().send_message(Msg::FetchDashboard);
+        // ctx.link().send_future(async {
+        //     test_upload().await.unwrap();
+        //     Msg::SetDashboardFetchState(FetchState::Failed(FetchError {
+        //         err: JsValue::from_str("all good"),
+        //     }))
+        // });
 
         Self {
             value: 0,
@@ -167,7 +167,7 @@ impl Component for App {
                 <div>
                     <p>{"NotFetching"}</p>
                     <button onclick = {ctx.link().callback(|_| Msg::FetchDashboard)}>
-                        { "Get Dashboard" }
+                        {"Get Dashboard"}
                     </button>
                 </div>
             },
@@ -177,15 +177,23 @@ impl Component for App {
 
                 for entry in data.cache_list.iter() {
                     card_list.push(html! {
-                        <div class="card">
+                        <div class={format!("card {}", if entry.is_ready(){"ready"}else{"not_ready"})}>
                             <table>
                             <tr>
-                                <td class="key">
-                                    {format!("Id: ")}
-                                </td>
-                                <td class="value">
-                                    {format!("{}", entry.id)}
-                                </td>
+                                <td>{"Id: "}</td>
+                                <td><a href={format!("/{}", entry.id.to_string())}>{entry.id.to_string()}</a></td>
+                            </tr>
+                            <tr>
+                                <td>{"Username: "}</td>
+                                <td>{&entry.metadata.username}</td>
+                            </tr>
+                            <tr>
+                                <td>{"Ext: "}</td>
+                                <td>{&entry.metadata.file_ext}</td>
+                            </tr>
+                            <tr>
+                                <td>{"Compressed size: "}</td>
+                                <td>{format!("{} bytes",entry.data_size())}</td>
                             </tr>
                             </table>
                         </div>

@@ -69,3 +69,39 @@ fn read_static(file_name: &str, remote_addr: SocketAddr) -> Option<Vec<u8>> {
         .ok()?;
     Some(buffer)
 }
+
+
+#[rocket::options("/json")]
+pub fn option_json() -> crate::response::JsonApiResponse {
+    /*
+        We're currently having issues connecting a NextJs sevrer to this storage server
+
+        we belive that his might help
+        but we have no idea what to set here and in the NextJs config
+
+        The thing is that test_upload (in front/main.rs) works fine, and do somewaht the same thing as the NextJs
+
+        CORS errors..
+    */
+    warn!("option req");
+    crate::response::JsonApiResponseBuilder::default()
+        .with_status(Status::NoContent)
+        .with_header("Content-Type", "text/plain")
+        // .with_header("Access-Control-Allow-Origin", "*")
+        // .with_header("Access-Control-Allow-Method", "POST")
+        // .with_header("Access-Control-Allow-Headers", "X-PINGOTHER, Content-Type")
+
+
+        
+        // .with_header("Content-Type", "text/plain")
+        // .with_header("Access-Control-Allow-Origin", "*")
+        // .with_header("Access-Control-Allow-Cedentials", "true")
+        // .with_header("Access-Control-Expose-Headers", "*")
+        // .with_header("Access-Control-Max-Age", "5")
+        // .with_header("Access-Control-Allow-Method", "POST,OPTIONS,GET")
+        // .with_header(
+        //     "Access-Control-Allow-Headers",
+        //     "Content-Type",
+        // )
+        .build()
+}

@@ -64,9 +64,9 @@ impl Default for JsonApiResponseBuilder {
                     h.insert("Content-Type".to_string(), "application/json".to_string());
 
                     // Unstable be carefull
-                    h.insert("Access-Control-Allow-Origin".to_string(), "http://192.168.1.20:3000".to_string());
+                    h.insert("Access-Control-Allow-Origin".to_string(), "http://localhost:3000".to_string());
                     h.insert("Access-Control-Allow-Method".to_string(), "POST,GET,OPTIONS".to_string());
-                    h.insert("Access-Control-Allow-Headers".to_string(), "Content-Type".to_string());
+                    h.insert("Access-Control-Allow-Headers".to_string(), "X-PINGOTHER, Content-Type".to_string());
                     h
                 },
             },

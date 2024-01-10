@@ -11,6 +11,7 @@
 body{
   background-color: var(--background);
   color: white;
+  font-size: 1.2em;
 }
 
 button {
@@ -41,7 +42,6 @@ button {
 }
 
 .card{
-  background-color: var(--secondary);
   color:var(--text);
   border: 2px solid white;
   margin-bottom: 10px;
@@ -52,22 +52,28 @@ button {
   padding: 20px;
 }
 
-tr:first-child th:nth-child(2){
-    color: blue;
-    font-size: 2em;
+table{
+/*  border: 2px solid red;*/
+  width: 60%;
+  margin: auto;
 }
-.key{
+
+td:nth-child(1){
+  text-align: left;
   color: var(--text);
   margin-right: 2%;
 }
 
-.value{
+td:nth-child(2){
+  text-align: left;
   color: var(--text2);
 }
 
 .ready{
-
+  background-color: var(--secondary);
 }
+
 .not_ready{
+  background-color: var(--accent);
 
 }

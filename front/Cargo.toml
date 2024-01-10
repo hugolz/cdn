@@ -20,3 +20,4 @@ web-sys = "0.3.66"
 shared = { path = "../shared"}
 serde_json = "1.0.111"
 gloo-utils = { version = "0.1", features = ["serde"] }
+mem = { git = "https://github.com/bowarc/Crates" , package = "mem"}
