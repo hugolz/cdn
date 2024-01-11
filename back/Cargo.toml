@@ -11,11 +11,11 @@ path = "src/main.rs"
 rbase64 = "2.0.3"
 rocket = { version = "0.5.0", features = ["json"] }
 uuid =  { version = "1.6.1", features = ["v4", "serde"] }
-logger = {git = "https://github.com/Bowarc/Crates.git", package = "logger"}
-time = {git = "https://github.com/Bowarc/Crates.git", package = "time"}
+logger = { git = "https://github.com/Bowarc/Crates.git", package = "logger" }
+time = { git = "https://github.com/Bowarc/Crates.git", package = "time" }
 log = "0.4.20"
 brotli = "3.4.0"
 regex = "1.10.2"
 thiserror = "1.0.51"
 futures = { version = "0.3.30", default-features = false, features = ["async-await"] }
-shared ={ path = "../shared"}
+shared = { path = "../shared"}

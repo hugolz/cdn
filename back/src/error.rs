@@ -23,4 +23,10 @@ pub enum CacheError {
 
     #[error("The given id doesn't correspond to any saved cache")]
     NotFound,
+
+    #[error("Could not serialize")]
+    Serialization,
+
+    #[error("Could not deserialize")]
+    Deserialization
 }

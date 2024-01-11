@@ -35,7 +35,7 @@ impl CacheEntry {
         self.is_ready
             .store(rdy, std::sync::atomic::Ordering::Relaxed)
     }
-    pub fn data_size(&self) -> usize{
+    pub fn data_size(&self) -> usize {
         self.data_size.load(std::sync::atomic::Ordering::Relaxed)
     }
 }

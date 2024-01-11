@@ -49,7 +49,7 @@ async fn test_upload() -> Result<(), FetchError> {
         "{\"metadata\": {\"username\": \"Hugo\",\"file_ext\": \"png\"},\"file\": \"Empty\"}",
     )));
 
-    let request = Request::new_with_str_and_init("http://192.168.1.24:8001/json", &init)?;
+    let request = Request::new_with_str_and_init("http://192.168.1.24:8001/upload", &init)?;
 
     request
         .headers()
@@ -181,7 +181,7 @@ impl Component for App {
                             <table>
                             <tr>
                                 <td>{"Id: "}</td>
-                                <td><a href={format!("/{}", entry.id.to_string())}>{entry.id.to_string()}</a></td>
+                                <td><a href={format!("/download/{}", entry.id.to_string())}>{entry.id.to_string()}</a></td>
                             </tr>
                             <tr>
                                 <td>{"Username: "}</td>

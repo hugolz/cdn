@@ -1,12 +1,9 @@
-use crate::cache::Cache;
-use rocket::serde::json::serde_json::{json, Value};
-use rocket::tokio::sync::RwLock;
-
 #[rocket::get("/cache_list")]
 pub async fn cache_list(
-    cache: &rocket::State<RwLock<Cache>>,
+    cache: &rocket::State<rocket::tokio::sync::RwLock<crate::cache::Cache>>,
     remote_addr: std::net::SocketAddr,
 ) -> String {
+    debug!("{remote_addr} has requested the cache list");
     let data = cache
         .read()
         .await
@@ -16,6 +13,5 @@ pub async fn cache_list(
             rocket::serde::json::to_string(&**cache_entry).unwrap()
         })
         .collect::<Vec<String>>();
-    debug!("{remote_addr} has requested the cache list");
     format!("{data:?}")
 }

@@ -1,32 +1,26 @@
-use crate::cache::Cache;
-use rocket::tokio::sync::RwLock;
-use rocket::{
-    http::Status,
-    serde::json::{serde_json::json, Json},
+use {
+    crate::response::{JsonApiResponse, JsonApiResponseBuilder},
+    rocket::{http::Status, serde::json::serde_json::json},
 };
 
-#[rocket::post("/json", format = "application/json", data = "<data>")]
-pub async fn upload_json(
-    data: Json<shared::data::UploadData>,
-    cache: &rocket::State<RwLock<Cache>>,
-) -> crate::response::JsonApiResponse {
+#[rocket::post("/upload", format = "application/json", data = "<data>")]
+pub async fn upload(
+    data: rocket::serde::json::Json<shared::data::UploadData>,
+    cache: &rocket::State<rocket::tokio::sync::RwLock<crate::cache::Cache>>,
+) -> JsonApiResponse {
     // Setup
-
     let start_timer = std::time::Instant::now();
     let id = uuid::Uuid::new_v4();
     let metadata = data.metadata.clone();
     let file_data = &data.file;
-    let wait_store = true;
+    let wait_store = true; // Probably better to make this an endpoint like /upload/ and /upload/awaited/
 
     // Validation of user input
-
-    debug!("/json upload");
-
     if !regex::Regex::new(r"^[A-Za-z0-9]*$")
-        .unwrap()
+        .unwrap() // Should not fail
         .is_match(&metadata.file_ext)
     {
-        return crate::response::JsonApiResponseBuilder::default()
+        return JsonApiResponseBuilder::default()
             .with_json(json!({"result": "denied", "message": "The specified extension should only contain alphanumeric characters"}))
             .with_status(Status::BadRequest).build();
     }
@@ -37,13 +31,12 @@ pub async fn upload_json(
         metadata.file_ext,
         rocket::data::ByteUnit::Byte(file_data.len() as u64)
     );
-    use std::io::Write as _;
 
     // Decode user input | Decoding makes the compression 'faster' koz it has less data to compress
     // let file_content = file_data.clone().into_bytes();
     let Ok(file_content) = rbase64::decode(file_data) else {
         error!("[{id}] Could not decode request");
-        return crate::response::JsonApiResponseBuilder::default()
+        return JsonApiResponseBuilder::default()
             .with_json(
                 json!({"result": "failled", "message": "Could not understand the given data."}),
             )
@@ -60,14 +53,27 @@ pub async fn upload_json(
 
     if wait_store {
         debug!("[{id}] Waiting for cache to finish storing the data");
-        if let Err(e) = exec.await.unwrap() {
-            error!("[{id}] An error occured while storing the given data: {e}");
-            return crate::response::JsonApiResponseBuilder::default()
-            .with_json(
-                json!({"result": "failled", "message": "An error occured while caching the data"}),
-            )
-            .with_status(Status::InternalServerError)
-            .build();
+
+        match exec.await {
+            Ok(Ok(())) => {
+                // All good
+            },
+            Ok(Err(e)) => {
+                    error!("[{id}] An error occured while storing the given data: {e}");
+                    return JsonApiResponseBuilder::default()
+                    .with_json(
+                        json!({"result": "failled", "message": "An error occured while caching the data"}),
+                    )
+                    .with_status(Status::InternalServerError)
+                    .build();
+            }
+            Err(join_error) => {
+                error!("[{id}] Something went really bad while waiting for worker task to end: {join_error}");
+                return JsonApiResponseBuilder::default()
+                    .with_json(json!({"result": "failled", "message": "Worker failled"}))
+                    .with_status(Status::InternalServerError)
+                    .build();
+            }
         }
     }
 
@@ -76,20 +82,8 @@ pub async fn upload_json(
         time::format(start_timer.elapsed())
     );
 
-    crate::response::JsonApiResponseBuilder::default()
+    JsonApiResponseBuilder::default()
         .with_json(json!({"result": "created", "file_name": id.hyphenated().to_string()}))
         .with_status(Status::Created)
         .build()
 }
-
-#[rocket::post("/", data = "<file>")]
-pub async fn basic_upload(file: rocket::Data<'_>) -> String {
-    // I wonder if there is a way to get the file name..
-    let stream = file.open(rocket::data::ByteUnit::Kilobyte(128));
-    let Ok(buff) = stream.into_bytes().await else {
-        return "Failled to unpack the file".to_string();
-    };
-    format!("Received file with len: {}", buff.len())
-}
-
-

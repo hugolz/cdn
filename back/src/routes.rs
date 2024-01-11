@@ -1,61 +1,60 @@
-use std::net::SocketAddr;
+use {
+    crate::response::Response,
+    rocket::http::{ContentType, Status},
+    std::net::SocketAddr,
+};
 
-use rocket::http::Status;
-
-mod dashboard;
-mod download;
-mod upload;
+#[path = "routes/dashboard.rs"]
+mod dashboard_route;
+#[path = "routes/download.rs"]
+mod download_route;
+#[path = "routes/upload.rs"] // Naming conflict in main when registering route
+mod upload_route;
 
 #[allow(unused_imports)] // Used by main.rs
-pub use dashboard::*;
+pub use dashboard_route::*;
 #[allow(unused_imports)] // Used by main.rs
-pub use download::*;
+pub use download_route::*;
 #[allow(unused_imports)] // Used by main.rs
-pub use upload::*;
+pub use upload_route::*;
 
 #[rocket::get("/")]
-pub async fn root(remote_addr: SocketAddr) -> crate::response::Response {
-    let msg = "
+pub async fn root(remote_addr: SocketAddr) -> Response {
+    let _old_msg = "
+
         Hi, please take a look at the /examples directory to understand how to use this api
     ";
-    let buffer = read_static("index.html", remote_addr).unwrap();
 
-    crate::response::Response {
-        status: Status::Ok,
-        content: buffer,
-        c_type: rocket::http::ContentType::HTML,
-    }
+    file_response("index.html", ContentType::HTML, remote_addr)
 }
 
 #[rocket::get("/style.css")]
-pub async fn style(remote_addr: SocketAddr) -> crate::response::Response {
-    let buffer = read_static("style.css", remote_addr).unwrap();
-
-    crate::response::Response {
-        status: Status::Ok,
-        content: buffer,
-        c_type: rocket::http::ContentType::CSS,
-    }
+pub async fn style(remote_addr: SocketAddr) -> Response {
+    file_response("style.css", ContentType::CSS, remote_addr)
 }
 
 #[rocket::get("/front.js")]
-pub async fn front(remote_addr: SocketAddr) -> crate::response::Response {
-    let buffer = read_static("front.js", remote_addr).unwrap();
-
-    crate::response::Response {
-        status: Status::Ok,
-        content: buffer,
-        c_type: rocket::http::ContentType::JavaScript,
-    }
+pub async fn front(remote_addr: SocketAddr) -> Response {
+    file_response("front.js", ContentType::JavaScript, remote_addr)
 }
 
 #[rocket::get("/front_bg.wasm")]
-pub fn wasm(remote_addr: SocketAddr) -> crate::response::Response {
-    let buffer = read_static("front_bg.wasm", remote_addr).unwrap();
-    crate::response::Response {
-        status: Status::Ok,
-        content: buffer,
-        c_type: rocket::http::ContentType::WASM,
+pub fn wasm(remote_addr: SocketAddr) -> Response {
+    file_response("front_bg.wasm", ContentType::WASM, remote_addr)
+}
+
+fn file_response(file_name: &str, content_type: ContentType, remote_addr: SocketAddr) -> Response {
+    match read_static(file_name, remote_addr) {
+        Some(bytes) => Response {
+            status: Status::Ok,
+            content: bytes,
+            content_type: content_type,
+        },
+        None => Response {
+            status: Status::InternalServerError,
+            content: Vec::new(),
+            content_type: ContentType::Plain,
+        },
     }
 }
 
@@ -70,9 +69,8 @@ fn read_static(file_name: &str, remote_addr: SocketAddr) -> Option<Vec<u8>> {
     Some(buffer)
 }
 
-
-#[rocket::options("/json")]
-pub fn option_json() -> crate::response::JsonApiResponse {
+#[rocket::options("/upload")]
+pub fn upload_option() -> crate::response::JsonApiResponse {
     /*
         We're currently having issues connecting a NextJs sevrer to this storage server
 
@@ -90,9 +88,6 @@ pub fn option_json() -> crate::response::JsonApiResponse {
         // .with_header("Access-Control-Allow-Origin", "*")
         // .with_header("Access-Control-Allow-Method", "POST")
         // .with_header("Access-Control-Allow-Headers", "X-PINGOTHER, Content-Type")
-
-
-        
         // .with_header("Content-Type", "text/plain")
         // .with_header("Access-Control-Allow-Origin", "*")
         // .with_header("Access-Control-Allow-Cedentials", "true")

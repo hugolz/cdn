@@ -1,17 +1,14 @@
-use std::str::FromStr;
-
-use crate::{
-    cache::Cache,
-    response::{JsonApiResponse, JsonApiResponseBuilder},
-};
-use rocket::tokio::sync::RwLock;
-use rocket::{
-    http::Status,
-    serde::json::{serde_json::json, Json},
+use {
+    crate::response::{JsonApiResponse, JsonApiResponseBuilder},
+    rocket::{http::Status, serde::json::serde_json::json},
+    std::str::FromStr,
 };
 
-#[rocket::get("/<id>")]
-pub async fn basic_download(id: &str, cache: &rocket::State<RwLock<Cache>>) -> JsonApiResponse {
+#[rocket::get("/download/<id>")]
+pub async fn download(
+    id: &str,
+    cache: &rocket::State<rocket::tokio::sync::RwLock<crate::cache::Cache>>,
+) -> JsonApiResponse {
     debug!("Download request of: {id}");
     let Ok(id) = uuid::Uuid::from_str(id) else {
         error!("Could not understand given id: {id}");
@@ -23,7 +20,20 @@ pub async fn basic_download(id: &str, cache: &rocket::State<RwLock<Cache>>) -> J
             .with_status(Status::BadRequest)
             .build();
     };
-    let (meta, data) = cache.read().await.load(id).await.unwrap();
+    let (meta, data) = match cache.read().await.load(id).await {
+        Ok(meta_data) => meta_data,
+        Err(e) => {
+            error!("[{id}] Could not load cache due to: {e}");
+            return JsonApiResponseBuilder::default()
+            .with_json(json!({
+                "result": "failled",
+                "message": format!("Id not found")
+            }))
+            .with_status(Status::BadRequest)
+            .build()    
+
+        }
+    };
 
     // let data_b64 = String::from_utf8(data).unwrap();
     let data_b64 = rbase64::encode(&data);

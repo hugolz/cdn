@@ -1,18 +1,11 @@
 use crate::error::CacheError;
 use rocket::serde::json::serde_json::{self, json};
-use rocket::tokio::io::AsyncReadExt;
-use rocket::tokio::{self, io::AsyncWriteExt as _};
+use rocket::tokio;
 use shared::data::{CacheEntry, Metadata};
-use std::{
-    str::FromStr,
-    sync::{
-        atomic::{AtomicBool, AtomicUsize, Ordering},
-        Arc,
-    },
-};
+use std::sync::{atomic::Ordering, Arc};
 
 const CACHE_DIRECTORY: &'static str = "./cache";
-const COMPRESSION_LEVEL: i32 = 5; // 1..=11 The only difference with 11 is that 11 takes more time
+const COMPRESSION_LEVEL: i32 = 5; // 1..=11
 
 #[derive(Default)]
 pub struct Cache {
@@ -21,57 +14,108 @@ pub struct Cache {
 }
 
 impl Cache {
-    pub fn new() -> Self {
-        let files = std::fs::read_dir(CACHE_DIRECTORY).expect("Could not read cache directory");
+    pub fn new() -> Option<Self> {
+        use std::str::FromStr as _;
+        let files = std::fs::read_dir(CACHE_DIRECTORY)
+            .map_err(|e| format!("Could not open cache dir due to: {e}"))
+            .ok()?;
+
+        // The default one is bad
+        let display_path =
+            |path: std::path::PathBuf| -> String { path.display().to_string().replace("\\", "/") };
 
         let data = files
             .flatten()
             .flat_map(|entry| {
-                let metadata = entry.metadata().unwrap();
-                if metadata.is_dir() {
+                let metadata = entry
+                    .metadata()
+                    .map_err(|e| {
+                        format!(
+                            "Could not read metadata from cache file '{p}' due to: {e}",
+                            p = display_path(entry.path())
+                        )
+                    })
+                    .ok()?;
+
+                if !metadata.is_file() {
+                    warn!(
+                        "Cache loading skipping '{p}' as it's not a file",
+                        p = display_path(entry.path())
+                    );
                     return None;
                 }
                 let path = entry.path();
-                let id = path.file_stem().unwrap().to_str().unwrap();
-                let ext = path.extension().unwrap().to_str().unwrap();
+                let Some(id) = path.file_stem().and_then(|stem| stem.to_str()) else {
+                    warn!(
+                        "Could not extract id from cache file '{}'",
+                        display_path(path)
+                    );
+                    return None;
+                };
+                let Some(ext) = path.extension().and_then(|ext| ext.to_str()) else {
+                    warn!(
+                        "Could not extract extension from cache file '{}'",
+                        display_path(path)
+                    );
+                    return None;
+                };
                 // ignore data files
-                if ext == "data" {
+
+                if ext != "meta" {
+                    // Not a meta file, don't care
                     return None;
                 }
 
-                // debug!("{id}, {ext}");
-                let file_content: serde_json::Value =
-                    serde_json::from_str(&std::fs::read_to_string(path.clone()).unwrap()).unwrap();
-                let username = file_content
+                let file_content: serde_json::Value = serde_json::from_str(
+                    &std::fs::read_to_string(path.clone())
+                        .map_err(|e| format!("Could not open cache file '{id}' due to: {e}"))
+                        .ok()?,
+                )
+                .map_err(|e| format!("Could not deserialize cache file '{id}' due to: {e}"))
+                .ok()?;
+
+                let Some(username) = file_content
                     .get("username")
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .to_string();
-                let file_ext = file_content
+                    .and_then(|val| val.as_str())
+                    .and_then(|s| Some(s.to_string()))
+                else {
+                    warn!("Could not get the username property of cache file '{id}'");
+                    return None;
+                };
+
+                let Some(file_ext) = file_content
                     .get("extension")
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .to_string();
-                let data_size = file_content
+                    .and_then(|val| val.as_str())
+                    .and_then(|s| Some(s.to_string()))
+                else {
+                    warn!("Could not get the extension property of cache file '{id}'");
+                    return None;
+                };
+
+                let Some(data_size) = file_content
                     .get("data size")
-                    .unwrap()
-                    .as_number()
-                    .unwrap()
-                    .as_u64()
-                    .unwrap() as usize;
+                    .and_then(|val| val.as_number())
+                    .and_then(|n| n.as_u64())
+                    .and_then(|n| Some(n as usize))
+                else {
+                    warn!("Could not get the data size property of cache file '{id}'");
+                    return None;
+                };
 
                 Some(Arc::new(CacheEntry {
-                    id: uuid::Uuid::from_str(id).unwrap(),
+                    id: uuid::Uuid::from_str(id)
+                        .map_err(|e| {
+                            format!("Could not transform id '{id}' to a usable uuid due to: {e}")
+                        })
+                        .ok()?,
                     metadata: Metadata { username, file_ext },
-                    is_ready: AtomicBool::new(true),
-                    data_size: AtomicUsize::new(data_size),
+                    is_ready: std::sync::atomic::AtomicBool::new(true),
+                    data_size: std::sync::atomic::AtomicUsize::new(data_size),
                 }))
             })
             .collect::<Vec<Arc<CacheEntry>>>();
 
-        Self { data }
+        Some(Self { data })
     }
     pub fn store(
         &mut self,
@@ -99,6 +143,8 @@ impl Cache {
     }
 
     pub async fn load(&self, id: uuid::Uuid) -> Result<(Metadata, Vec<u8>), CacheError> {
+        use tokio::io::AsyncReadExt;
+
         // Load and decompress the given cache entry
         let entry = self
             .data
@@ -133,7 +179,7 @@ impl Cache {
 }
 
 async fn store(entry: Arc<CacheEntry>, original_data: Vec<u8>) -> Result<usize, CacheError> {
-    use std::io::Cursor;
+    use tokio::io::AsyncWriteExt as _;
 
     let id = entry.id.as_hyphenated().to_string();
 
@@ -185,7 +231,7 @@ async fn store(entry: Arc<CacheEntry>, original_data: Vec<u8>) -> Result<usize, 
     };
 
     let mut compressed_data_buffer = Vec::new();
-    let mut original_data_reader = Cursor::new(original_data);
+    let mut original_data_reader = std::io::Cursor::new(original_data);
     let compression_result = brotli::BrotliCompress(
         &mut original_data_reader,
         &mut compressed_data_buffer,
@@ -205,9 +251,7 @@ async fn store(entry: Arc<CacheEntry>, original_data: Vec<u8>) -> Result<usize, 
         .data_size
         .store(compressed_data_length, Ordering::Relaxed);
 
-    let data_write_result = data_file.write_all(&compressed_data_buffer).await;
-
-    if let Err(e) = data_write_result {
+    if let Err(e) = data_file.write_all(&compressed_data_buffer).await {
         error!("[{id}] Error while writing data file {e}");
         return Err(CacheError::FileWrite(format!("data - {e}")));
     }
@@ -225,11 +269,14 @@ async fn store(entry: Arc<CacheEntry>, original_data: Vec<u8>) -> Result<usize, 
         "extension": entry.metadata.file_ext,
         "data size": compressed_data_length
     }))
-    .unwrap();
+    .map_err(|e| {
+        error!("[{id}] Could not create meta json object due to: {e}");
+        CacheError::Serialization
+    })?;
 
-    let meta = meta.as_bytes(); // Cannot inline with the above due to lifetime issues
+    // let meta = ; // Cannot inline with the above due to lifetime issues
 
-    if let Err(e) = meta_file.write_all(meta).await {
+    if let Err(e) = meta_file.write_all(meta.as_bytes()).await {
         error!("Failled to write meta file: {e}");
         return Err(CacheError::FileWrite(format!("meta - {e}")));
     }

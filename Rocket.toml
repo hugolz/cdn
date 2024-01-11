@@ -23,15 +23,15 @@ file = "0 B"
 form = "0 B"
 msgpack = "0 B"
 string = "0 B"
-json = "1 MiB" # 100 ko for images ? 
+json = "50 MiB" # 100 ko for images ? 
 
 
-## set only when compiled in debug mode, i.e, `cargo build`
-[debug]
-## only the `json` key from `default` will be overridden; `form` will remain
-limits = { json = "50 MiB" }
+# ## set only when compiled in debug mode, i.e, `cargo build`
+# [debug]
+# ## only the `json` key from `default` will be overridden; `form` will remain
+# limits = { json = "50 MiB" }
 
 
-## set only when compiled in release mode, i.e, `cargo build --release`
-[release]
-limits = { json = "10 MiB" }
+# ## set only when compiled in release mode, i.e, `cargo build --release`
+# [release]
+# limits = { json = "10 MiB" }

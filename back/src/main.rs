@@ -27,14 +27,14 @@ async fn main() {
         message = "Program start"
     );
 
-    let cache = rocket::tokio::sync::RwLock::new(cache::Cache::new());
+    let cache = rocket::tokio::sync::RwLock::new(cache::Cache::new().expect("Could not load cache"));
 
     let rocket = rocket::build()
         .manage(cache)
         .register("/", rocket::catchers![catchers::root_403])
         .register(
             "/json",
-            rocket::catchers![catchers::upload_json_400, catchers::upload_json_413],
+            rocket::catchers![catchers::upload_400, catchers::upload_413],
         )
         .mount(
             "/",
@@ -43,11 +43,10 @@ async fn main() {
                 routes::style,
                 routes::front,
                 routes::wasm,
-                routes::upload_json,
-                routes::basic_upload,
-                routes::basic_download,
+                routes::upload,
+                routes::download,
                 routes::cache_list,
-                routes::option_json
+                routes::upload_option
             ],
         )
         .ignite()
@@ -58,7 +57,7 @@ async fn main() {
 
     // Safety:
     //  This will only be writen once and at the reads are not yet loaded because the sever is not yet launched
-    unsafe { JSON_REQ_LIMIT = rocket.config().limits.get("json").unwrap() }
+    unsafe { JSON_REQ_LIMIT = rocket.config().limits.get("json").expect("Failled to read the normal and default config") }
 
     rocket.launch().await.unwrap();
 }
@@ -104,7 +103,7 @@ fn display_config<'a>(
                 .map(|name| name.as_ref())
                 .unwrap_or("[ERROR] Undefined");
             let method = route.method.as_str();
-            format!("({name}) {uri} {method}")
+            format!("{method:<7} {uri:<15} {name}")
         })
         .collect::<Vec<String>>();
 
