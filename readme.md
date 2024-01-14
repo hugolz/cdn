@@ -13,13 +13,13 @@ Paused for now as it was a porject for work but i don't need it for now
 
 
 ## Roadmap
-- [ ] The actual server
+- [x] The actual server
     - [x] Web server that we can upload files to
-    - [ ] Web server that we can download files from
+    - [x] Web server that we can download files from
     - [x] Json api
 - [x] Compression
-- [ ] Wasm front end
-    - [ ] Dashboard
+- [x] Wasm front end
+    - [x] Dashboard
 
 
 ## How to use
