@@ -23,5 +23,5 @@ Paused for now as it was a porject for work but i don't need it for now
 
 
 ## How to use
-The scripts are in the ./scripts dir
+The scripts are in the ./scripts dir  
 `sh scripts/build.sh`
