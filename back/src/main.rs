@@ -120,7 +120,7 @@ fn display_config<'a>(
                 .map(|code| code.to_string())
                 .unwrap_or("[ERROR] Undefined".to_string());
 
-            format!("({name}) {base} {code}")
+            format!("{code:<4} {base:<6} {name}")
         })
         .collect::<Vec<String>>();
 

@@ -20,7 +20,7 @@ impl<'r> rocket::response::Responder<'r, 'static> for JsonApiResponse {
         }
 
         let out = resp.ok();
-        trace!("{out:?}");
+        // trace!("{out:?}");
 
         out
     }
