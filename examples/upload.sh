@@ -4,7 +4,7 @@ username="hugo"
 file_path="./assets/rocket.png"
 
 file_ext="png"
-endpoint="http://172.26.224.1:8001/upload/" 
+endpoint="http://192.168.1.24:8001/upload/" 
 
 # Don't forget the -w 0 else the output will be escaped and escape chars are not allowed in serde::json
 file_base64=$(base64 -w 0 "$file_path")

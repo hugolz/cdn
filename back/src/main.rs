@@ -33,7 +33,7 @@ async fn main() {
         .manage(cache)
         .register("/", rocket::catchers![catchers::root_403])
         .register(
-            "/json",
+            "/upload",
             rocket::catchers![catchers::upload_400, catchers::upload_413],
         )
         .mount(
@@ -120,7 +120,7 @@ fn display_config<'a>(
                 .map(|code| code.to_string())
                 .unwrap_or("[ERROR] Undefined".to_string());
 
-            format!("{code:<4} {base:<6} {name}")
+            format!("{code:<7} {base:<15} {name}")
         })
         .collect::<Vec<String>>();
 
