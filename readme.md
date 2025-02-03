@@ -1,5 +1,7 @@
 Compressed Delivery Network :D
 
+# This project has moved to https://github.com/bowarc/storage_server
+
 ## Notes
 Idk if any security is needed (ouside something against ddos or spam but i wont do that here)  
 About file size, we rly should set a limit, even like a rly high one, but a limit is needed
